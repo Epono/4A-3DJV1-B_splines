@@ -23,10 +23,29 @@ int x0, y0;  // clic souris
 char presse;
 int anglex, angley, x, y, xold, yold;
 
+int numLines;
+typedef enum state {
+	waitingforclick,
+	clickedonce,
+};
+
+typedef struct point {
+	int x;
+	int y;
+}point;
+
+
+point lines[256][2];
+
+
+int gState = waitingforclick;
+int lineisvalid = 0;
+int gHeight;
+float gColor[3] = {0, 1, 0};
+
 
 /* prototypes de fonctions */
-void affichage(void);                             // modélisation
-void display();
+void display();										//displaying
 void clavier(unsigned char touche, int x, int y);   // fonction clavier
 void mouse(int bouton, int etat, int x, int y);      // fonction souris
 void drawLines();
@@ -65,6 +84,9 @@ int main(int argc,       // argc: nombre d'arguments, argc vaut au moins 1
 	autre fonction. Ici, le main fait usage des deux fonctions de rappel (qui fonctionnent en même temps)
 	alors qu'il ne les connaît pas par avance.*/
 
+	handleMenu();
+	numLines = -1;
+	glMatrixMode(GL_MODELVIEW);
 
 
 	/* Entrée dans la boucle principale de glut, traitement des évènements */
@@ -76,18 +98,9 @@ void display() {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glColor3f(1.0, 0.0, 0.0);
 
-	//draw two points
-	glBegin(GL_POINTS);
-	for(int i = 0; i < 10; i++) {
-		glVertex2i(10 + 5 * i, 110);
-	}
-	glEnd();
-
-	//draw a line
-	glBegin(GL_LINES);
-	glVertex2i(10, 10);
-	glVertex2i(100, 100);
-	glEnd();
+	glClear(GL_COLOR_BUFFER_BIT);
+	drawLines();
+	glutSwapBuffers();
 
 	glFlush();
 }
@@ -104,22 +117,47 @@ affichage();
 }*/
 
 void mouse(int button, int state, int x, int y) {
+	/*
 	// Si on appuie sur le bouton de gauche
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-		presse = 1; //le booleen presse passe à 1 (vrai)
-		xold = x; //on sauvegardela position de la souris
-		yold = y;
+	presse = 1; //le booleen presse passe à 1 (vrai)
+	xold = x; //on sauvegardela position de la souris
+	yold = y;
 	}
 
 	// Si on relache le bouton gauche
-	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
-		printf("(%d, %d)\n", x, y);
 
-		presse = 0; //le booleen presse passe à 0 (faux)
-		drawLines();
+
+	presse = 0; //le booleen presse passe à 0 (faux)
+	drawLines();
 	}
 
 	glutPostRedisplay(); // Rafraichissement de l'affichage
+	*/
+	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP)
+		printf("(%d, %d)\n", x, y);
+
+	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
+		switch(gState) {
+
+		case waitingforclick:
+			printf("one clidk");
+			++numLines;
+			lines[numLines][0].x = x;
+			lines[numLines][0].y = y;
+			lines[numLines][1].x = x;
+			lines[numLines][1].y = y;
+			gState++;
+			break;
+		case clickedonce:
+			printf("2 clidk");
+			lines[numLines][1].x = x;
+			lines[numLines][1].y = y;
+			gState = waitingforclick;
+			break;
+		}
+	}
+	glutPostRedisplay();
 }
 
 
@@ -154,20 +192,22 @@ void handleMenu() {
 void menu(int opt) {
 
 }
-
 void drawLines() {
-	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3ub(255, 255, 255);
-	glBegin(GL_LINE_STRIP);
-	glVertex2f(-4.00, 0.00);
-	glVertex2f(-3.00, 2.00);
-	glVertex2f(-2.00, 0.00);
-	glVertex2f(-1.00, 2.00);
-	glVertex2f(0.0, 0.00);
-	glVertex2f(1.00, 2.00);
-	glVertex2f(2.00, 0.00);
-	glVertex2f(3.00, 2.00);
-	glVertex2f(4.00, 0.00);
+	glColor3fv(gColor);
+	glBegin(GL_LINES);
+	for(int i = 0; i <= numLines; i++) {
+		glVertex2i((lines[i][0].x) - 250, (gHeight - lines[i][0].y) + 250);
+		glVertex2i((lines[i][1].x) - 250, (gHeight - lines[i][1].y) + 250);
+	}
 	glEnd();
 }
-
+/*
+void drawPolygons() {
+glColor3fv(gColor);
+glBegin(GL_POLYGON);
+for(int i = 0; i <= numPolygons; i++) {
+glVertex2i(polygons[i][0].x, gHeight - lines[i][0].y);
+glVertex2i(polygons[i][1].x, gHeight - lines[i][1].y);
+}
+glEnd();
+}*/
