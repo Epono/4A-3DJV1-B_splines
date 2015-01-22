@@ -12,166 +12,210 @@
 /*													   */
 /*******************************************************/
 
-
-
 #include<windows.h>
 #include<GL/glut.h>
 #include<stdlib.h>
 #include<stdio.h>
 
-int x0, y0;  // clic souris
-char presse;
-int anglex, angley, x, y, xold, yold;
-
-int numLines;
-typedef enum state {
-	waitingforclick,
-	clickedonce,
-};
-
-typedef struct point {
+// Represents a 2D point (x, y)
+typedef struct Point {
 	int x;
 	int y;
-}point;
+} Point;
 
+// Represents the state of the creation action
+typedef enum creationState {
+	waitingForFirstClick,
+	waitingForNextClick
+};
+int creationState = waitingForFirstClick;
 
-point lines[256][2];
+// Represents the state of the creation action
+typedef enum creationToolState {
+	lineCreationState,
+	polygonCreationState
+};
+int creationToolState = lineCreationState;
 
+int numLines = -1;							// Number of lines stored
+Point lines[256][2];						// 2D array of points (store tips)
+float linesColor[3] = {0, 0, 0};			// Lines color
 
-int gState = waitingforclick;
-int lineisvalid = 0;
-int gHeight;
-float gColor[3] = {0, 1, 0};
+int numPolygons = -1;						// Number of polygons to display
+Point polygons[256][256];					// 2D array of polygons (store vertexes)
+int polygonSize[256];						// Number of vertexes
+float polygonsColor[3] = {0.5f, 0.5f, 0};	// Polygons color
 
+/* Functions prototypes */
+void display();										// manages displaying
+void keyboard(unsigned char key, int x, int y);		// manages keyboard inputs
+void mouse(int bouton, int etat, int x, int y);		// manages mouse inputs
 
-/* prototypes de fonctions */
-void display();										//displaying
-void clavier(unsigned char touche, int x, int y);   // fonction clavier
-void mouse(int bouton, int etat, int x, int y);      // fonction souris
-void drawLines();
-void handleMenu();
+void drawLines();									// draws the lines
+void drawPolygons();								// draws the polygons
+void createMenu();
 void menu(int opt);
 
+int main(int argc, char **argv) {
+	//Glut and Window Initialization
+	glutInit(&argc, argv);										// Initializes Glut
+	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);	// RGB display mode, with depth
+	glutInitWindowSize(500, 500);								// Sets window's dimensions
+	glutInitWindowPosition(100, 100);							// Positions the window
+	glutCreateWindow("FunStuffWithOpenGL");						// Title of the window
 
-/* Programme principal */
-int main(int argc,       // argc: nombre d'arguments, argc vaut au moins 1
-		 char **argv) {  // argv: tableau de chaines de caractères, argv[0] contient le nom du programme lancé (plus un éventuel chemin)
+	gluOrtho2D(0, 500, 500, 0);									// 2D orthogonal frame with xMin, xMax, yMin, yMax
 
+	// OpenGL initialization
+	glClearColor(1.0, 1.0, 1.0, 1.0);		// Background color : black ?
+	glColor3f(0.0, 0.0, 0.0);				// Color : white
+	glPointSize(4.0);						// Point size : 2px
 
-	/* Initialisation de glut et creation de la fenetre */
-	glutInit(&argc, argv);                       // Initialisation
-	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH); // mode d'affichage RGB, et test prafondeur
-	glutInitWindowSize(500, 500);                // dimension fenêtre
-	glutInitWindowPosition(100, 100);           // position coin haut gauche
-	glutCreateWindow("A vous de jouer!!!");  // nom
-
-	/* Repère 2D délimitant les abscisses et les ordonnées*/
-	gluOrtho2D(-250.0, 250.0, -250.0, 250.0);
-
-	/* Initialisation d'OpenGL */
-	glClearColor(1.0, 1.0, 1.0, 1.0);
-	glColor3f(0.0, 0.0, 0.0);       // couleur: blanc
-	glPointSize(4.0);               // taille d'un point: 2px
-
-	/* Enregistrement des fonctions de rappel
-	=> initialisation des fonctions callback appelées par glut */
-	//glutDisplayFunc(affichage);
+	// Registering of callback functions called by glut
 	glutDisplayFunc(display);
-	glutKeyboardFunc(clavier);
+	glutKeyboardFunc(keyboard);
 	glutMouseFunc(mouse);
 
-	/* rq: le callback de fonction (fonction de rappel) est une fonction qui est passée en argument à une
-	autre fonction. Ici, le main fait usage des deux fonctions de rappel (qui fonctionnent en même temps)
-	alors qu'il ne les connaît pas par avance.*/
-
-	handleMenu();
-	numLines = -1;
+	//glOrtho(-1, 1.0, -1, 1.0, -1.0, 1.0); // il faut le mettre ?
+	createMenu();							// Creates the menu available via right-click
 	glMatrixMode(GL_MODELVIEW);
 
-
-	/* Entrée dans la boucle principale de glut, traitement des évènements */
-	glutMainLoop();         // lancement de la boucle de réception des évènements
-	return 0;
-}
-
-void display() {
-	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(1.0, 0.0, 0.0);
-
-	glClear(GL_COLOR_BUFFER_BIT);
-	drawLines();
-	glutSwapBuffers();
-
-	glFlush();
+	glutMainLoop();         // Launches main OpenGL loop, events handlers
+	return 0;				// Should not get here (unless we exit with 'q' ?)
 }
 
 /*
-void mouse(int button, int state, int x, int y) {
-// Si on appuie sur le bouton de gauche
-if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-x0 = x - 250; //on sauvegarde la position de la souris
-y0 = -y + 250;
-affichage();
+ * Function in charge of refreshing the display of the window
+ */
+void display() {
+	glClear(GL_COLOR_BUFFER_BIT);	//Clears the display
+	glColor3f(1.0, 0.0, 0.0);		//Sets the drawing color
+
+	drawLines();					//Draws lines
+	drawPolygons();				//Draws polygons
+	glutSwapBuffers();				//Double buffer ?
+
+	glFlush();						//Forces refresh ?
 }
 
-}*/
-
+/*
+ * Function in charge of handling mouse events (clicking only, not dragging)
+ */
 void mouse(int button, int state, int x, int y) {
+	//if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) 
+	//	printf("coords clicked : (%d, %d)\n", x, y);
+
 	/*
-	// Si on appuie sur le bouton de gauche
-	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-	presse = 1; //le booleen presse passe à 1 (vrai)
-	xold = x; //on sauvegardela position de la souris
-	yold = y;
+	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
+	switch(creationState) {
+	case waitingForFirstClick:
+	printf("one clidk");
+	++numLines;
+	lines[numLines][0].x = x;
+	lines[numLines][0].y = y;
+	lines[numLines][1].x = x;
+	lines[numLines][1].y = y;
+	creationState++;
+	break;
+	case waitingForNextClick:
+	printf("2 clidk");
+	lines[numLines][1].x = x;
+	lines[numLines][1].y = y;
+	creationState = waitingForFirstClick;
+	break;
 	}
-
-	// Si on relache le bouton gauche
-
-
-	presse = 0; //le booleen presse passe à 0 (faux)
-	drawLines();
 	}
-
-	glutPostRedisplay(); // Rafraichissement de l'affichage
 	*/
-	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP)
-		printf("(%d, %d)\n", x, y);
 
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
-		switch(gState) {
-
-		case waitingforclick:
-			printf("one clidk");
-			++numLines;
-			lines[numLines][0].x = x;
-			lines[numLines][0].y = y;
-			lines[numLines][1].x = x;
-			lines[numLines][1].y = y;
-			gState++;
+		switch(creationState) {
+		case waitingForFirstClick:
+			switch(creationToolState) {
+			case lineCreationState:
+				printf("Start of line selected : (%d, %d)\n", x, y);
+				++numLines;
+				lines[numLines][0].x = x;
+				lines[numLines][0].y = y;
+				lines[numLines][1].x = x;
+				lines[numLines][1].y = y;
+				creationState++;
+				break;
+			case polygonCreationState:
+				printf("Start of polygon selected : (%d, %d)\n", x, y);
+				++numPolygons;
+				polygonSize[numPolygons] = 1;
+				polygons[numPolygons][0].x = x;
+				polygons[numPolygons][0].y = y;
+				polygons[numPolygons][1].x = x;
+				polygons[numPolygons][1].y = y;
+				creationState++;
+				break;
+			}
 			break;
-		case clickedonce:
-			printf("2 clidk");
-			lines[numLines][1].x = x;
-			lines[numLines][1].y = y;
-			gState = waitingforclick;
+		case waitingForNextClick:
+			switch(creationToolState) {
+			case lineCreationState:
+				printf("End of line selected : (%d, %d)\n", x, y);
+				lines[numLines][1].x = x;
+				lines[numLines][1].y = y;
+				creationState = waitingForFirstClick;
+				break;
+			case polygonCreationState:
+				printf("New point selected : (%d, %d)\n", x, y);
+				polygons[numPolygons][polygonSize[numPolygons]].x = x;
+				polygons[numPolygons][polygonSize[numPolygons]].y = y;
+				polygonSize[numPolygons]++;
+				printf("%d\n", polygonSize[numPolygons]);
+				break;
+			}
 			break;
 		}
 	}
-	glutPostRedisplay();
+
+	glutPostRedisplay();		// Refresh display
 }
 
-
-
-/* Evènement du clavier */
-void clavier(unsigned char touche, int x, int y) {
-	switch(touche) {
-
-	case 'q':/* Quitter le programme */
+/*
+* Function in charge of handling keyboard events
+* key : key pressed
+* x, y : coordinates of the pointer when the key was pressed ?
+*/
+void keyboard(unsigned char key, int x, int y) {
+	switch(key) {
+	case 'v': // Validate the polygon
+		//TODO
+		break;
+	case 'p': // Switch to polygon creation	
+		if(creationToolState != polygonCreationState) {
+			printf("Switching to polygon creation\n");
+			creationToolState = polygonCreationState;
+		}
+		break;
+	case 'l': // Switch to line creation	
+		if(creationToolState != lineCreationState) {
+			printf("Switching to line creation\n");
+			creationToolState = lineCreationState;
+		}
+		break;
+	case 'c': // Clear the window
+		numLines = -1;
+		numPolygons = -1;
+		for(int i = 0; i < 256; i++) {
+			polygonSize[i] = 0;
+		}
+		creationState = waitingForFirstClick;
+		glutPostRedisplay();
+		break;
+	case 'q':
 		exit(0);
 	}
 }
 
-void handleMenu() {
+//TODO
+/*
+ * Creates the menu available via right-click
+ */
+void createMenu() {
 	int submenu1, submenu2;
 	submenu1 = glutCreateMenu(menu);
 	glutAddMenuEntry("abc", 1);
@@ -189,25 +233,31 @@ void handleMenu() {
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
+//TODO
+/*
+ * Function to handle menu
+ */
 void menu(int opt) {
 
 }
+
 void drawLines() {
-	glColor3fv(gColor);
+	glColor3fv(linesColor);
 	glBegin(GL_LINES);
 	for(int i = 0; i <= numLines; i++) {
-		glVertex2i((lines[i][0].x) - 250, (gHeight - lines[i][0].y) + 250);
-		glVertex2i((lines[i][1].x) - 250, (gHeight - lines[i][1].y) + 250);
+		glVertex2i((lines[i][0].x), lines[i][0].y);
+		glVertex2i((lines[i][1].x), lines[i][1].y);
 	}
 	glEnd();
 }
-/*
+
 void drawPolygons() {
-glColor3fv(gColor);
-glBegin(GL_POLYGON);
-for(int i = 0; i <= numPolygons; i++) {
-glVertex2i(polygons[i][0].x, gHeight - lines[i][0].y);
-glVertex2i(polygons[i][1].x, gHeight - lines[i][1].y);
+	glColor3fv(polygonsColor);
+	glBegin(GL_POLYGON);
+	for(int i = 0; i <= numPolygons; i++) {
+		for(int j = 0; j < polygonSize[i]; j++) {
+			glVertex2i(polygons[i][j].x, polygons[i][j].y);
+		}
+	}
+	glEnd();
 }
-glEnd();
-}*/
