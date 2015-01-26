@@ -32,3 +32,8 @@ Debug/*
 *.vcxproj
 *.vcxproj.filters
 
+*.idb
+*.tlog
+*.opensdf
+*.sdf
+*.sln

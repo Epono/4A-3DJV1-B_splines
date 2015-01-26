@@ -25,10 +25,6 @@ int creationState = waitingForFirstClick;
 
 int creationToolState = polygonCreationState;
 
-int numLines = -1;							// Number of lines stored
-Line lines[256];							// 2D array of points (store tips)
-float linesColor[3] = {0, 0, 0};			// Lines color
-
 int numPolygons = -1;						// Number of polygons to display
 CustomPolygon polygons[256];				// 2D array of polygons
 float polygonsColor[3] = {0.5f, 0.5f, 0};	// Polygons color
@@ -38,7 +34,6 @@ void display();										// manages displaying
 void keyboard(unsigned char key, int x, int y);		// manages keyboard inputs
 void mouse(int bouton, int etat, int x, int y);		// manages mouse inputs
 
-void drawLines();									// draws the lines
 void drawPolygons();								// draws the polygons
 void createMenu();
 void menu(int opt);
@@ -81,7 +76,6 @@ void display() {
 	glClear(GL_COLOR_BUFFER_BIT);	//Clears the display
 	glColor3f(1.0, 0.0, 0.0);		//Sets the drawing color
 
-	drawLines();					//Draws lines
 	drawPolygons();					//Draws polygons
 	glutSwapBuffers();				//Double buffer ?
 
@@ -92,49 +86,30 @@ void display() {
  * Function in charge of handling mouse events (clicking only, not dragging)
  */
 void mouse(int button, int state, int x, int y) {
-	//if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) 
-	//	printf("coords clicked : (%d, %d)\n", x, y);
-
+	Point point;
+	CustomPolygon customPolygon;
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
 		switch(creationState) {
+		case pending:
+			printf("Coords clicked (pending state) : (%d, %d)\n", x, y);
+			break;
 		case waitingForFirstClick:
-			switch(creationToolState) {
-			case lineCreationState:
-				printf("Start of line selected : (%d, %d)\n", x, y);
-				++numLines;
-				Point startPoint = {x, y};
-				lines[numLines].startPoint = lines[numLines].endPoint = startPoint;
-				creationState++;
-				break;
-			case polygonCreationState:
-				printf("Start of polygon selected : (%d, %d)\n", x, y);
-				++numPolygons;
-				Point point = {x, y};
-				Point* points = (Point*) malloc(sizeof(Point) * 256);
-				points[0] = point;
-				CustomPolygon p = {points, 1};
-				polygons[numPolygons] = p;
-				creationState++;
-				break;
-			}
+			printf("Start of polygon selected : (%d, %d)\n", x, y);
+			++numPolygons;
+			point.x = x, point.y = y;
+			Point* points = (Point*) malloc(sizeof(Point) * 256);
+			points[0] = point;
+			customPolygon.vertexes = points, customPolygon.vertexesCount = 1;
+			polygons[numPolygons] = customPolygon;
+			creationState++;
 			break;
 		case waitingForNextClick:
-			switch(creationToolState) {
-			case lineCreationState:
-				printf("End of line selected : (%d, %d)\n", x, y);
-				Point endPoint = {x, y};
-				lines[numLines].endPoint = endPoint;
-				creationState = waitingForFirstClick;
-				break;
-			case polygonCreationState:
-				printf("New point selected : (%d, %d)\n", x, y);
-				Point point = {x, y};
-				CustomPolygon p = polygons[numPolygons];
-				p.vertexes[p.vertexesCount] = point;
-				p.vertexesCount++;
-				polygons[numPolygons] = p;
-				break;
-			}
+			printf("New point selected : (%d, %d)\n", x, y);
+			point.x = x, point.y = y;
+			customPolygon = polygons[numPolygons];
+			customPolygon.vertexes[customPolygon.vertexesCount] = point;
+			customPolygon.vertexesCount++;
+			polygons[numPolygons] = customPolygon;
 			break;
 		}
 	}
@@ -150,22 +125,16 @@ void mouse(int button, int state, int x, int y) {
 void keyboard(unsigned char key, int x, int y) {
 	switch(key) {
 	case 'v': // Validate the polygon
-		creationState = waitingForFirstClick;
+		creationState = pending;
 		break;
 	case 'p': // Switch to polygon creation	
-		if(creationToolState != polygonCreationState) {
+		if(creationToolState != polygonCreationState || creationState != waitingForFirstClick) {
 			printf("Switching to polygon creation\n");
 			creationToolState = polygonCreationState;
-		}
-		break;
-	case 'l': // Switch to line creation	
-		if(creationToolState != lineCreationState) {
-			printf("Switching to line creation\n");
-			creationToolState = lineCreationState;
+			creationState = waitingForFirstClick;
 		}
 		break;
 	case 'c': // Clear the window
-		numLines = -1;
 		numPolygons = -1;
 		creationState = waitingForFirstClick;
 		glutPostRedisplay();
@@ -203,16 +172,6 @@ void createMenu() {
  */
 void menu(int opt) {
 
-}
-
-void drawLines() {
-	glColor3fv(linesColor);
-	for(int i = 0; i <= numLines; i++) {
-		glBegin(GL_LINES);
-		glVertex2i(lines[i].startPoint.x, lines[i].startPoint.y);
-		glVertex2i(lines[i].endPoint.x, lines[i].endPoint.y);
-		glEnd();
-	}
 }
 
 void drawPolygons() {

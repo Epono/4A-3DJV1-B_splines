@@ -5,9 +5,15 @@
  */
 
 // Represents the state of the creation action
+typedef enum creationToolState {
+	polygonCreationState
+};
+
+// Represents the state of the creation action
 typedef enum creationState {
 	waitingForFirstClick,
-	waitingForNextClick
+	waitingForNextClick,
+	pending
 };
 
 // Represents a 2D point (x, y)
@@ -27,9 +33,3 @@ typedef struct CustomPolygon {
 	Point* vertexes;
 	int vertexesCount;
 } CustomPolygon;
-
-// Represents the state of the creation action
-typedef enum creationToolState {
-	lineCreationState,
-	polygonCreationState
-};
