@@ -17,33 +17,20 @@
 #include<stdlib.h>
 #include<stdio.h>
 
-// Represents a 2D point (x, y)
-typedef struct Point {
-	int x;
-	int y;
-} Point;
+#include "../headers/utils.h"
+#include "../headers/decoupage.h"
+#include "../headers/remplissage.h"
 
-// Represents the state of the creation action
-typedef enum creationState {
-	waitingForFirstClick,
-	waitingForNextClick
-};
 int creationState = waitingForFirstClick;
 
-// Represents the state of the creation action
-typedef enum creationToolState {
-	lineCreationState,
-	polygonCreationState
-};
-int creationToolState = lineCreationState;
+int creationToolState = polygonCreationState;
 
 int numLines = -1;							// Number of lines stored
-Point lines[256][2];						// 2D array of points (store tips)
+Line lines[256];							// 2D array of points (store tips)
 float linesColor[3] = {0, 0, 0};			// Lines color
 
 int numPolygons = -1;						// Number of polygons to display
-Point polygons[256][256];					// 2D array of polygons (store vertexes)
-int polygonSize[256];						// Number of vertexes
+CustomPolygon polygons[256];				// 2D array of polygons
 float polygonsColor[3] = {0.5f, 0.5f, 0};	// Polygons color
 
 /* Functions prototypes */
@@ -55,6 +42,9 @@ void drawLines();									// draws the lines
 void drawPolygons();								// draws the polygons
 void createMenu();
 void menu(int opt);
+
+// Debug
+void printPolygon(int polygonCount);
 
 int main(int argc, char **argv) {
 	//Glut and Window Initialization
@@ -92,7 +82,7 @@ void display() {
 	glColor3f(1.0, 0.0, 0.0);		//Sets the drawing color
 
 	drawLines();					//Draws lines
-	drawPolygons();				//Draws polygons
+	drawPolygons();					//Draws polygons
 	glutSwapBuffers();				//Double buffer ?
 
 	glFlush();						//Forces refresh ?
@@ -105,28 +95,6 @@ void mouse(int button, int state, int x, int y) {
 	//if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) 
 	//	printf("coords clicked : (%d, %d)\n", x, y);
 
-	/*
-	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
-	switch(creationState) {
-	case waitingForFirstClick:
-	printf("one clidk");
-	++numLines;
-	lines[numLines][0].x = x;
-	lines[numLines][0].y = y;
-	lines[numLines][1].x = x;
-	lines[numLines][1].y = y;
-	creationState++;
-	break;
-	case waitingForNextClick:
-	printf("2 clidk");
-	lines[numLines][1].x = x;
-	lines[numLines][1].y = y;
-	creationState = waitingForFirstClick;
-	break;
-	}
-	}
-	*/
-
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
 		switch(creationState) {
 		case waitingForFirstClick:
@@ -134,20 +102,18 @@ void mouse(int button, int state, int x, int y) {
 			case lineCreationState:
 				printf("Start of line selected : (%d, %d)\n", x, y);
 				++numLines;
-				lines[numLines][0].x = x;
-				lines[numLines][0].y = y;
-				lines[numLines][1].x = x;
-				lines[numLines][1].y = y;
+				Point startPoint = {x, y};
+				lines[numLines].startPoint = lines[numLines].endPoint = startPoint;
 				creationState++;
 				break;
 			case polygonCreationState:
 				printf("Start of polygon selected : (%d, %d)\n", x, y);
 				++numPolygons;
-				polygonSize[numPolygons] = 1;
-				polygons[numPolygons][0].x = x;
-				polygons[numPolygons][0].y = y;
-				polygons[numPolygons][1].x = x;
-				polygons[numPolygons][1].y = y;
+				Point point = {x, y};
+				Point* points = (Point*) malloc(sizeof(Point) * 256);
+				points[0] = point;
+				CustomPolygon p = {points, 1};
+				polygons[numPolygons] = p;
 				creationState++;
 				break;
 			}
@@ -156,16 +122,17 @@ void mouse(int button, int state, int x, int y) {
 			switch(creationToolState) {
 			case lineCreationState:
 				printf("End of line selected : (%d, %d)\n", x, y);
-				lines[numLines][1].x = x;
-				lines[numLines][1].y = y;
+				Point endPoint = {x, y};
+				lines[numLines].endPoint = endPoint;
 				creationState = waitingForFirstClick;
 				break;
 			case polygonCreationState:
 				printf("New point selected : (%d, %d)\n", x, y);
-				polygons[numPolygons][polygonSize[numPolygons]].x = x;
-				polygons[numPolygons][polygonSize[numPolygons]].y = y;
-				polygonSize[numPolygons]++;
-				printf("%d\n", polygonSize[numPolygons]);
+				Point point = {x, y};
+				CustomPolygon p = polygons[numPolygons];
+				p.vertexes[p.vertexesCount] = point;
+				p.vertexesCount++;
+				polygons[numPolygons] = p;
 				break;
 			}
 			break;
@@ -183,7 +150,7 @@ void mouse(int button, int state, int x, int y) {
 void keyboard(unsigned char key, int x, int y) {
 	switch(key) {
 	case 'v': // Validate the polygon
-		//TODO
+		creationState = waitingForFirstClick;
 		break;
 	case 'p': // Switch to polygon creation	
 		if(creationToolState != polygonCreationState) {
@@ -200,9 +167,6 @@ void keyboard(unsigned char key, int x, int y) {
 	case 'c': // Clear the window
 		numLines = -1;
 		numPolygons = -1;
-		for(int i = 0; i < 256; i++) {
-			polygonSize[i] = 0;
-		}
 		creationState = waitingForFirstClick;
 		glutPostRedisplay();
 		break;
@@ -243,87 +207,42 @@ void menu(int opt) {
 
 void drawLines() {
 	glColor3fv(linesColor);
-	glBegin(GL_LINES);
 	for(int i = 0; i <= numLines; i++) {
-		glVertex2i((lines[i][0].x), lines[i][0].y);
-		glVertex2i((lines[i][1].x), lines[i][1].y);
+		glBegin(GL_LINES);
+		glVertex2i(lines[i].startPoint.x, lines[i].startPoint.y);
+		glVertex2i(lines[i].endPoint.x, lines[i].endPoint.y);
+		glEnd();
 	}
-	glEnd();
 }
 
 void drawPolygons() {
-	glColor3fv(polygonsColor);
-	glBegin(GL_POLYGON);
 	for(int i = 0; i <= numPolygons; i++) {
-		for(int j = 0; j < polygonSize[i]; j++) {
-			glVertex2i(polygons[i][j].x, polygons[i][j].y);
+		CustomPolygon polygon = polygons[i];
+
+		// Draws vertexes of the polygon
+		glBegin(GL_POINTS);
+		for(int j = 0; j < polygon.vertexesCount; j++) {
+			glVertex2i(polygon.vertexes[j].x, polygon.vertexes[j].y);
 		}
-	}
-	glEnd();
-}
+		glEnd();
 
-/*
- * Implementation of the Sutherland-Hodgman algorithm (cutting the window ?)
- *
- * PL : sommets du polygone a decouper
- * N1 : nombre de sommets du polygone a decouper
- * PW : sommets de la fenetre (4)
- */
-void decoupageSutherland_Hodgman(Point PL[], int N1, Point PW[]) {
-	Point S, F, I;
-	Point PS[256];		//liste des points du polygone de sortie
-	int N2;				//nombre de points de PS
-
-	//Pour chaue point de la window PW (fenetre de decoupage)
-	for(int i = 0; i < 4; i++) {
-		N2 = 0;
-		// PS <- vide
-
-		//Pour chaque point du polygone PL (polygone a decouper)
-		for(int j = 0; j <= N1; j++) {
-			if(j == 0) {
-				F = PL[j]; // Sauver le 1er sommet
-			}
-			else {
-				if(coupe(S, PL[j], F[i], F[i + 1])) {
-					I = intersection(S, PL[j], F[i], F[i + 1]);
-					Charger(I, PS); //what ?
-					N2++;
-				}
-			}
-			S = PL[j];
-			if(visible(S, F[i], F[i + 1])) {
-				Charger(S, PS);
-			}
-			N2++;
+		// Draws the polygon
+		glColor3fv(polygonsColor);
+		glBegin(GL_LINE_STRIP);
+		for(int j = 0; j < polygon.vertexesCount; j++) {
+			glVertex2i(polygon.vertexes[j].x, polygon.vertexes[j].y);
 		}
-
-		if(N2 > 0) {
-			//traitement du dernier cote de PL (polygone a decouper)
-			if(coupe(S, F, F[i], F[i + 1])) {
-				I = intersection(S, F, F[i], F[i + 1]);
-				Charger(I, PS); // what ?
-				N2++;
-			}
-			//Decoupage pour chacun des polygones
-			PL = PS;
-			N1 = N2;
-		}
+		glVertex2i(polygon.vertexes[0].x, polygon.vertexes[0].y);
+		glEnd();
 	}
 }
 
-// S : point courant du polygone a decouper
-// Pj : les autres points du polygone a decouper
-// Fi : un point de la fenetre
-int coupe(Point S, Point Pj, Point Fi, Point Fii) {
-	//retournant un booléen suivant l'intersection possible entre le côté [SPj ] du
-	//	polygone et le bord prolongé(une droite) (FiFi + 1) de la fenêtre
-}
+void printPolygon(int polygonCount) {
+	CustomPolygon cp = polygons[polygonCount];
 
-Point intersection(Point S, Point Pj, Point Fi, Point Fii) {
-	//retournant le point d'intersection [SPj ] \ (FiFi+1)
-}
-
-int visible(Point S, Point Fi, Point Fii) {
-	//retournant un booléen si S est visible par rapport à(FiFi + 1)
+	printf("**************** Polygon **************\n");
+	for(int i = 0; i < cp.vertexesCount; i++) {
+		printf("Point %d : (%d, %d)\n", i, cp.vertexes[i].x, cp.vertexes[i].y);
+	}
+	printf("**************** End Polygon **************\n");
 }
