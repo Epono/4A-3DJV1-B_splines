@@ -29,12 +29,19 @@ int numPolygons = -1;						// Number of polygons to display
 CustomPolygon polygons[256];				// 2D array of polygons
 float polygonsColor[3] = {0.5f, 0.5f, 0};	// Polygons color
 
+QuadrangleWindow window;					// Window used to cut another polygon
+float windowColor[3] = {0, 0.5f, 0.5f};		// Window color
+
+int presse = 0;								// Stores if the mouse is dragging
+
 /* Functions prototypes */
 void display();										// manages displaying
 void keyboard(unsigned char key, int x, int y);		// manages keyboard inputs
-void mouse(int bouton, int etat, int x, int y);		// manages mouse inputs
+void mouse(int bouton, int etat, int x, int y);		// manages mouse clicks
+void motion(int x, int y);							// manages mouse motions
 
 void drawPolygons();								// draws the polygons
+void drawWindow();									// draws the window (algorithm of my bite)
 void createMenu();
 void menu(int opt);
 
@@ -60,6 +67,7 @@ int main(int argc, char **argv) {
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
 	glutMouseFunc(mouse);
+	glutMotionFunc(motion);
 
 	//glOrtho(-1, 1.0, -1, 1.0, -1.0, 1.0); // il faut le mettre ?
 	createMenu();							// Creates the menu available via right-click
@@ -73,13 +81,14 @@ int main(int argc, char **argv) {
  * Function in charge of refreshing the display of the window
  */
 void display() {
-	glClear(GL_COLOR_BUFFER_BIT);	//Clears the display
-	glColor3f(1.0, 0.0, 0.0);		//Sets the drawing color
+	glClear(GL_COLOR_BUFFER_BIT);	// Clears the display
+	glColor3f(1.0, 0.0, 0.0);		// Sets the drawing color
 
-	drawPolygons();					//Draws polygons
-	glutSwapBuffers();				//Double buffer ?
+	drawPolygons();					// Draws polygons
+	drawWindow();					// Draws the window (for the kniffey algorithm)
+	glutSwapBuffers();				// Double buffer ?
 
-	glFlush();						//Forces refresh ?
+	glFlush();						// Forces refresh ?
 }
 
 /*
@@ -88,7 +97,9 @@ void display() {
 void mouse(int button, int state, int x, int y) {
 	Point point;
 	CustomPolygon customPolygon;
+
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
+		presse = 1;
 		switch(creationState) {
 		case pending:
 			printf("Coords clicked (pending state) : (%d, %d)\n", x, y);
@@ -99,7 +110,7 @@ void mouse(int button, int state, int x, int y) {
 			point.x = x, point.y = y;
 			Point* points = (Point*) malloc(sizeof(Point) * 256);
 			points[0] = point;
-			customPolygon.vertexes = points, customPolygon.vertexesCount = 1;
+			customPolygon.vertices = points, customPolygon.verticesCount = 1;
 			polygons[numPolygons] = customPolygon;
 			creationState++;
 			break;
@@ -107,14 +118,26 @@ void mouse(int button, int state, int x, int y) {
 			printf("New point selected : (%d, %d)\n", x, y);
 			point.x = x, point.y = y;
 			customPolygon = polygons[numPolygons];
-			customPolygon.vertexes[customPolygon.vertexesCount] = point;
-			customPolygon.vertexesCount++;
+			customPolygon.vertices[customPolygon.verticesCount] = point;
+			customPolygon.verticesCount++;
 			polygons[numPolygons] = customPolygon;
 			break;
 		}
 	}
-
+	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+		presse = 0;
+	}
 	glutPostRedisplay();		// Refresh display
+}
+
+void motion(int x, int y) {
+	if(presse) {
+
+	}
+	//xold = x; //sauvegarde des valeurs courantes de la position de la souris
+	//yold = y;
+
+	glutPostRedisplay(); // Rafraichissement de l'affichage
 }
 
 /*
@@ -139,6 +162,8 @@ void keyboard(unsigned char key, int x, int y) {
 		creationState = waitingForFirstClick;
 		glutPostRedisplay();
 		break;
+	case 27:
+		exit(0);
 	case 'q':
 		exit(0);
 	}
@@ -149,20 +174,14 @@ void keyboard(unsigned char key, int x, int y) {
  * Creates the menu available via right-click
  */
 void createMenu() {
-	int submenu1, submenu2;
-	submenu1 = glutCreateMenu(menu);
-	glutAddMenuEntry("abc", 1);
-	glutAddMenuEntry("ABC", 2);
-	submenu2 = glutCreateMenu(menu);
-	glutAddMenuEntry("Green", 1);
-	glutAddMenuEntry("Red", 2);
-	glutAddMenuEntry("White", 3);
 	glutCreateMenu(menu);
-	glutAddMenuEntry("9 by 15", 0);
-	glutAddMenuEntry("Times Roman 10", 1);
-	glutAddMenuEntry("Times Roman 24", 2);
-	glutAddSubMenu("Messages", submenu1);
-	glutAddSubMenu("Color", submenu2);
+
+	glutAddMenuEntry("Couleurs", 0);
+	glutAddMenuEntry("Polygone (tracer)", 1);
+	glutAddMenuEntry("Fenetre (tracer)", 2);
+	glutAddMenuEntry("Fenetrage (algorithme)", 3);
+	glutAddMenuEntry("Remplissage (algorithme)", 4);
+
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
@@ -171,37 +190,75 @@ void createMenu() {
  * Function to handle menu
  */
 void menu(int opt) {
-
+	switch(opt) {
+	case 0:
+		printf("Choix de la couleur\n");
+		break;
+	case 1:
+		printf("Tracage de polygone\n");
+		break;
+	case 2:
+		printf("Tracage de fenetre\n");
+		break;
+	case 3:
+		printf("Algorithme de fenetrage\n");
+		break;
+	case 4:
+		printf("Alorithme de remplissage\n");
+		break;
+	default:
+		printf("What ? %d choisie mais pas d'option\n", opt);
+		break;
+	}
 }
 
 void drawPolygons() {
 	for(int i = 0; i <= numPolygons; i++) {
 		CustomPolygon polygon = polygons[i];
 
-		// Draws vertexes of the polygon
+		// Draws vertices of the polygon
 		glBegin(GL_POINTS);
-		for(int j = 0; j < polygon.vertexesCount; j++) {
-			glVertex2i(polygon.vertexes[j].x, polygon.vertexes[j].y);
+		for(int j = 0; j < polygon.verticesCount; j++) {
+			glVertex2i(polygon.vertices[j].x, polygon.vertices[j].y);
 		}
 		glEnd();
 
 		// Draws the polygon
 		glColor3fv(polygonsColor);
 		glBegin(GL_LINE_STRIP);
-		for(int j = 0; j < polygon.vertexesCount; j++) {
-			glVertex2i(polygon.vertexes[j].x, polygon.vertexes[j].y);
+		for(int j = 0; j < polygon.verticesCount; j++) {
+			glVertex2i(polygon.vertices[j].x, polygon.vertices[j].y);
 		}
-		glVertex2i(polygon.vertexes[0].x, polygon.vertexes[0].y);
+		glVertex2i(polygon.vertices[0].x, polygon.vertices[0].y);
 		glEnd();
 	}
+}
+
+void drawWindow() {
+	// Draws vertices of the window
+	glBegin(GL_POINTS);
+	for(int j = 0; j < 4; j++) {
+		glVertex2i(window.vertices[j].x, window.vertices[j].y);
+	}
+	glEnd();
+
+	// Draws the window
+	glColor3fv(windowColor);
+	glBegin(GL_LINE_STRIP);
+	for(int j = 0; j < 4; j++) {
+		glVertex2i(window.vertices[j].x, window.vertices[j].y);
+	}
+	glVertex2i(window.vertices[0].x, window.vertices[0].y);
+	glEnd();
 }
 
 void printPolygon(int polygonCount) {
 	CustomPolygon cp = polygons[polygonCount];
 
 	printf("**************** Polygon **************\n");
-	for(int i = 0; i < cp.vertexesCount; i++) {
-		printf("Point %d : (%d, %d)\n", i, cp.vertexes[i].x, cp.vertexes[i].y);
+	for(int i = 0; i < cp.verticesCount; i++) {
+		printf("Point %d : (%d, %d)\n", i, cp.vertices[i].x, cp.vertices[i].y);
 	}
 	printf("**************** End Polygon **************\n");
 }
+

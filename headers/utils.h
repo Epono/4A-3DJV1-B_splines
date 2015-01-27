@@ -30,6 +30,11 @@ typedef struct Line {
 
 // Represents a Polygon
 typedef struct CustomPolygon {
-	Point* vertexes;
-	int vertexesCount;
+	Point* vertices;
+	int verticesCount;
 } CustomPolygon;
+
+// Reprensents the Window
+typedef struct QuadrangleWindow {
+	Point vertices[4];
+} QuadrangleWindow;
