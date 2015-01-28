@@ -29,7 +29,7 @@ int numPolygons = -1;						// Number of polygons to display
 CustomPolygon polygons[256];				// 2D array of polygons
 float polygonsColor[3] = {0.5f, 0.5f, 0};	// Polygons color
 
-QuadrangleWindow window;					// Window used to cut another polygon
+CustomPolygon window;						// Window used to cut another polygon
 float windowColor[3] = {0, 0.5f, 0.5f};		// Window color
 
 int presse = 0;								// Stores if the mouse is dragging
@@ -202,6 +202,8 @@ void menu(int opt) {
 		break;
 	case 3:
 		printf("Algorithme de fenetrage\n");
+		decoupageWiki(&polygons[0], window);
+		glutPostRedisplay();
 		break;
 	case 4:
 		printf("Alorithme de remplissage\n");
@@ -235,6 +237,15 @@ void drawPolygons() {
 }
 
 void drawWindow() {
+	Point A = {100, 100};
+	Point B = {300, 100};
+	Point C = {300, 300};
+	Point D = {100, 300};
+	Point points[] = {A, B, C, D};
+	window.verticesCount = 4;
+	window.vertices = points;
+
+
 	// Draws vertices of the window
 	glBegin(GL_POINTS);
 	for(int j = 0; j < 4; j++) {
