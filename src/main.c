@@ -23,9 +23,8 @@
 
 int creationState = waitingForFirstClick;
 
-int creationToolState = polygonCreationState;
+int creationToolState = polygonCreationState; //State to know wich part are we drawing (window or polygon)
 
-int numPolygons = -1;						// Number of polygons to display
 CustomPolygon polygon;				// 2D array of polygons
 float polygonColor[3] = {0.5f, 0.5f, 0};	// Polygons color
 
@@ -40,7 +39,7 @@ void keyboard(unsigned char key, int x, int y);		// manages keyboard inputs
 void mouse(int bouton, int etat, int x, int y);		// manages mouse clicks
 void motion(int x, int y);							// manages mouse motions
 
-void drawPolygons();								// draws the polygons
+void drawPolygon(CustomPolygon cp, float color[]);								// draws the polygons
 void drawWindow();									// draws the window (algorithm of my bite)
 void createMenu();
 void menu(int opt);
@@ -84,8 +83,8 @@ void display() {
 	glClear(GL_COLOR_BUFFER_BIT);	// Clears the display
 	glColor3f(1.0, 0.0, 0.0);		// Sets the drawing color
 
-	drawPolygons();					// Draws polygons
-	drawWindow();					// Draws the window (for the kniffey algorithm)
+	drawPolygon(polygon, polygonColor); //Draw the polygon
+	drawPolygon(window, windowColor); // Draw the window
 	glutSwapBuffers();				// Double buffer ?
 
 	glFlush();						// Forces refresh ?
@@ -99,22 +98,43 @@ void mouse(int button, int state, int x, int y) {
 
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
 		presse = 1;
-		switch(creationState) {
+		switch(creationState) 
+		{
 		case pending:
 			printf("Coords clicked (pending state) : (%d, %d)\n", x, y);
 			break;
 		case waitingForFirstClick:
-			printf("Start of polygon selected : (%d, %d)\n", x, y);
-			++numPolygons;
 			point.x = x, point.y = y;
-			polygon.vertices[0] = point;
-			polygon.nbSides = 1;
+			switch (creationToolState)
+			{
+			case polygonCreationState:
+				printf("Mode Polygone\n");
+				polygon.vertices[0] = point;
+				polygon.nbSides = 1;
+				break;
+			case windowCreationState:
+				printf("Mode Fenetre\n");
+				window.vertices[0] = point;
+				window.nbSides = 1;
+				break;
+			default:
+				break;
+			}
 			creationState++;
 			break;
 		case waitingForNextClick:
-			printf("New point selected : (%d, %d)\n", x, y);
 			point.x = x, point.y = y;
-			polygon.vertices[polygon.nbSides++] = point;
+			switch (creationToolState)
+			{
+			case polygonCreationState:
+				polygon.vertices[polygon.nbSides++] = point;
+				break;
+			case windowCreationState:
+				window.vertices[window.nbSides++] = point;
+				break;
+			default:
+				break;
+			}
 			break;
 		}
 	}
@@ -152,7 +172,6 @@ void keyboard(unsigned char key, int x, int y) {
 		}
 		break;
 	case 'c': // Clear the window
-		numPolygons = -1;
 		creationState = waitingForFirstClick;
 		glutPostRedisplay();
 		break;
@@ -190,11 +209,11 @@ void createMenu() {
  */
 void menu(int opt) {
 	switch(opt) {
-	case 1:
-		printf("Tracage de polygone\n");
+	case 1: //Creation de polygone
+		creationToolState = polygonCreationState;
 		break;
-	case 2:
-		printf("Tracage de fenetre\n");
+	case 2: // Creation de fenetre
+		creationToolState = windowCreationState;
 		break;
 	case 3:
 		printf("Algorithme de fenetrage\n");
@@ -236,41 +255,19 @@ void colorPicking(int option)
 	display();
 }
 
-void drawPolygons() {
-	for(int i = 0; i <= numPolygons; i++) {
-		// Draws vertices of the polygon
-		glBegin(GL_POINTS);
-		for(int j = 0; j < polygon.nbSides; j++) {
-			glVertex2i(polygon.vertices[j].x, polygon.vertices[j].y);
-		}
-		glEnd();
-
-		// Draws the polygon
-		glColor3fv(polygonColor);
-		glBegin(GL_LINE_STRIP);
-		for(int j = 0; j < polygon.nbSides; j++) {
-			glVertex2i(polygon.vertices[j].x, polygon.vertices[j].y);
-		}
-		glVertex2i(polygon.vertices[0].x, polygon.vertices[0].y);
-		glEnd();
-	}
-}
-
-void drawWindow() {
-	// Draws vertices of the window
+void drawPolygon(CustomPolygon cp, float color[]) {
+	// Draws vertices of the polygon
 	glBegin(GL_POINTS);
-	for(int j = 0; j < 4; j++) {
-		glVertex2i(window.vertices[j].x, window.vertices[j].y);
-	}
+	for (int j = 0; j < cp.nbSides; j++)
+		glVertex2i(cp.vertices[j].x, cp.vertices[j].y);
 	glEnd();
 
-	// Draws the window
-	glColor3fv(windowColor);
+	// Draws the polygon
+	glColor3fv(color);
 	glBegin(GL_LINE_STRIP);
-	for(int j = 0; j < 4; j++) {
-		glVertex2i(window.vertices[j].x, window.vertices[j].y);
-	}
-	glVertex2i(window.vertices[0].x, window.vertices[0].y);
+	for(int j = 0; j < cp.nbSides; j++) 
+		glVertex2i(cp.vertices[j].x, cp.vertices[j].y);
+	glVertex2i(cp.vertices[0].x, cp.vertices[0].y);
 	glEnd();
 }
 
