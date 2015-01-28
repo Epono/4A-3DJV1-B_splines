@@ -17,19 +17,19 @@
 #include<stdlib.h>
 #include<stdio.h>
 
-#include "../headers/utils.h"
-#include "../headers/decoupage.h"
-#include "../headers/remplissage.h"
+#include "utils.h"
+#include "decoupage.h"
+#include "remplissage.h"
 
 int creationState = waitingForFirstClick;
 
 int creationToolState = polygonCreationState;
 
 int numPolygons = -1;						// Number of polygons to display
-CustomPolygon polygons[256];				// 2D array of polygons
-float polygonsColor[3] = {0.5f, 0.5f, 0};	// Polygons color
+CustomPolygon polygon;				// 2D array of polygons
+float polygonColor[3] = {0.5f, 0.5f, 0};	// Polygons color
 
-QuadrangleWindow window;					// Window used to cut another polygon
+CustomPolygon window;					// Window used to cut another polygon
 float windowColor[3] = {0, 0.5f, 0.5f};		// Window color
 
 int presse = 0;								// Stores if the mouse is dragging
@@ -44,7 +44,7 @@ void drawPolygons();								// draws the polygons
 void drawWindow();									// draws the window (algorithm of my bite)
 void createMenu();
 void menu(int opt);
-
+void colorPicking(int option);
 // Debug
 void printPolygon(int polygonCount);
 
@@ -96,7 +96,6 @@ void display() {
  */
 void mouse(int button, int state, int x, int y) {
 	Point point;
-	CustomPolygon customPolygon;
 
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
 		presse = 1;
@@ -108,19 +107,14 @@ void mouse(int button, int state, int x, int y) {
 			printf("Start of polygon selected : (%d, %d)\n", x, y);
 			++numPolygons;
 			point.x = x, point.y = y;
-			Point* points = (Point*) malloc(sizeof(Point) * 256);
-			points[0] = point;
-			customPolygon.vertices = points, customPolygon.verticesCount = 1;
-			polygons[numPolygons] = customPolygon;
+			polygon.vertices[0] = point;
+			polygon.nbSides = 1;
 			creationState++;
 			break;
 		case waitingForNextClick:
 			printf("New point selected : (%d, %d)\n", x, y);
 			point.x = x, point.y = y;
-			customPolygon = polygons[numPolygons];
-			customPolygon.vertices[customPolygon.verticesCount] = point;
-			customPolygon.verticesCount++;
-			polygons[numPolygons] = customPolygon;
+			polygon.vertices[polygon.nbSides++] = point;
 			break;
 		}
 	}
@@ -174,9 +168,14 @@ void keyboard(unsigned char key, int x, int y) {
  * Creates the menu available via right-click
  */
 void createMenu() {
-	glutCreateMenu(menu);
+	int mainMenu, colorMenu;
+	colorMenu = glutCreateMenu(colorPicking);
+	glutAddMenuEntry("Vert", 0);
+	glutAddMenuEntry("Bleu", 1);
+	glutAddMenuEntry("Rouge", 2);
 
-	glutAddMenuEntry("Couleurs", 0);
+	mainMenu = glutCreateMenu(menu);
+	glutAddSubMenu("Couleurs", colorMenu);
 	glutAddMenuEntry("Polygone (tracer)", 1);
 	glutAddMenuEntry("Fenetre (tracer)", 2);
 	glutAddMenuEntry("Fenetrage (algorithme)", 3);
@@ -191,9 +190,6 @@ void createMenu() {
  */
 void menu(int opt) {
 	switch(opt) {
-	case 0:
-		printf("Choix de la couleur\n");
-		break;
 	case 1:
 		printf("Tracage de polygone\n");
 		break;
@@ -212,21 +208,47 @@ void menu(int opt) {
 	}
 }
 
+void colorPicking(int option)
+{
+	switch (option)
+	{
+	case 0:
+		printf("Vert\n");
+		polygonColor[0] = 0.f; 
+		polygonColor[1] = 1.f;
+		polygonColor[2] = 0.f;
+		break;
+	case 1:
+		printf("Bleu\n"); 
+		polygonColor[0] = 0.f;
+		polygonColor[1] = 0.f;
+		polygonColor[2] = 1.f;
+		break;
+	case 2:
+		printf("Rouge\n");
+		polygonColor[0] = 1.f;
+		polygonColor[1] = 0.f;
+		polygonColor[2] = 0.f;
+		break;
+	default:
+		break;
+	}
+	display();
+}
+
 void drawPolygons() {
 	for(int i = 0; i <= numPolygons; i++) {
-		CustomPolygon polygon = polygons[i];
-
 		// Draws vertices of the polygon
 		glBegin(GL_POINTS);
-		for(int j = 0; j < polygon.verticesCount; j++) {
+		for(int j = 0; j < polygon.nbSides; j++) {
 			glVertex2i(polygon.vertices[j].x, polygon.vertices[j].y);
 		}
 		glEnd();
 
 		// Draws the polygon
-		glColor3fv(polygonsColor);
+		glColor3fv(polygonColor);
 		glBegin(GL_LINE_STRIP);
-		for(int j = 0; j < polygon.verticesCount; j++) {
+		for(int j = 0; j < polygon.nbSides; j++) {
 			glVertex2i(polygon.vertices[j].x, polygon.vertices[j].y);
 		}
 		glVertex2i(polygon.vertices[0].x, polygon.vertices[0].y);
@@ -253,11 +275,9 @@ void drawWindow() {
 }
 
 void printPolygon(int polygonCount) {
-	CustomPolygon cp = polygons[polygonCount];
-
 	printf("**************** Polygon **************\n");
-	for(int i = 0; i < cp.verticesCount; i++) {
-		printf("Point %d : (%d, %d)\n", i, cp.vertices[i].x, cp.vertices[i].y);
+	for(int i = 0; i < polygon.nbSides; i++) {
+		printf("Point %d : (%d, %d)\n", i, polygon.vertices[i].x, polygon.vertices[i].y);
 	}
 	printf("**************** End Polygon **************\n");
 }

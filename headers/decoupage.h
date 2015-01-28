@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../headers/utils.h"
+#include "utils.h"
 
 void decoupageSutherlandHodgman(Point PL[], int N1, Point PW[]);
 

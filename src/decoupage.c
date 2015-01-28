@@ -1,8 +1,8 @@
 #include<stdlib.h>
 #include<stdio.h>
 
-#include "../headers/utils.h"
-#include "../headers/decoupage.h"
+#include "utils.h"
+#include "decoupage.h"
 
 /*
  * Implementation of the Sutherland-Hodgman algorithm (cutting the window ?)
