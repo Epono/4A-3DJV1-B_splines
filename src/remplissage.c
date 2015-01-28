@@ -1,5 +1,5 @@
 #include<stdlib.h>
 #include<stdio.h>
 
-#include "../headers/utils.h"
-#include "../headers/remplissage.h"
+#include "utils.h"
+#include "remplissage.h"

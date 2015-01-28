@@ -31,6 +31,7 @@ Point returnPoint(Point P0, Point P1, Point P2, Point P3) {
 	int t = (S2.x * (P0.y - P2.y) - S2.y * (P0.x - P2.x)) / (-S2.x * S1.y + S1.x * S2.y);
 
 	Point intersectPoint = {P0.x + (t * S1.x), P0.y + (t * S1.y)};
+	printf("Le point d'intersection est (%d, %d)", intersectPoint.x, intersectPoint.y);
 	return intersectPoint;
 }
 
@@ -41,32 +42,42 @@ int visible(Point S, Point Fi, Point Fii) {
 	//Vector A = {Fi.x - S.x, Fi.y - S.y};
 	//Vector B = {Fii.x - S.x, Fii.y - S.y};
 
-	float longueurX_FiS = Fi.x - S.x;
-	float longueurY_FiS = Fi.y - S.y;
-	float longueurX_SFii = Fii.x - S.x;
-	float longueurY_SFii = Fii.y - S.y;
+	float longueurX_FiS = abs(Fi.x - S.x);
+	//printf("Longueur(x) Fi -> S : %f\n", Fi.x, S.x, longueurX_FiS);
+	float longueurY_FiS = abs(Fi.y - S.y);
+	//printf("Longueur(y) Fi -> S : %f\n", longueurY_FiS);
+	float longueurX_FiFii = abs(Fi.x - Fii.x);
+	//printf("Longueur(x) S -> Fii : %f\n", longueurX_FiFii);
+	float longueurY_FiFii = abs(Fi.y - Fii.y);
+	//printf("Longueur(y) S -> Fii : %f\n", longueurY_FiFii);
+
 
 	float longueurFiS = sqrt((longueurX_FiS * longueurX_FiS) + (longueurY_FiS * longueurY_FiS));
-	float longueurSFii = sqrt((longueurX_SFii * longueurX_SFii) + (longueurY_SFii * longueurY_SFii));
+	float longueurSFii = sqrt((longueurX_FiFii * longueurX_FiFii) + (longueurY_FiFii * longueurY_FiFii));
 
 	float longueurX_FiS_N = longueurX_FiS / longueurFiS;
 	float longueurY_FiS_N = longueurY_FiS / longueurFiS;
-	float longueurX_SFii_N = longueurX_SFii / longueurSFii;
-	float longueurY_SFii_N = longueurY_SFii / longueurSFii;
+	float longueurX_FiFii_N = longueurX_FiFii / longueurSFii;
+	float longueurY_FiFii_N = longueurY_FiFii / longueurSFii;
 
 	//Produit scalaire = (longueur * longueur) + (hauteur * hauteur) (normalisé)
-	float produitScalaire = (longueurX_FiS_N * longueurX_SFii_N) + (longueurY_FiS_N * longueurY_SFii_N);
+	float produitScalaire = (longueurX_FiS_N * longueurX_FiFii_N) + (longueurY_FiS_N * longueurY_FiFii_N);
 
+
+	printf("Le point (%d, %d) est il visible par rapport au segment (%d, %d)(%d, %d) (produit scalaire : %f)?\n", S.x, S.y, Fi.x, Fi.y, Fii.x, Fii.y, produitScalaire);
 	if(produitScalaire > 0) {
 		//a droite
+		printf("Oui\n");
 		return 1;
 	}
 	else if(produitScalaire < 0) {
 		//a gauche
+		printf("Non\n");
 		return 0;
 	}
 	else {
 		//sur le segment
+		printf("Oui\n");
 		return 1;
 	}
 }
@@ -74,53 +85,60 @@ int visible(Point S, Point Fi, Point Fii) {
 //PL contient en entrée le polygone a decouper et en sortie le polygone decoupé
 void decoupageWiki(CustomPolygon* entree, CustomPolygon fenetre) {
 	CustomPolygon* outputList = (CustomPolygon*) malloc(sizeof(CustomPolygon));
-	outputList->vertices = entree->vertices;
-	outputList->verticesCount = entree->verticesCount;
+	copyVertices(outputList->vertices, entree->vertices, entree->nbVertices);//outputList->vertices = entree->vertices;
+	outputList->nbVertices = entree->nbVertices;
 
 	CustomPolygon* inputList = (CustomPolygon*) malloc(sizeof(CustomPolygon));
 
-	for(int i = 0; i < fenetre.verticesCount; i++) {
-		Line clipEdge = {fenetre.vertices[i], fenetre.vertices[(i + 1) % fenetre.verticesCount]};
+	for(int i = 0; i < fenetre.nbVertices; i++) {
+		Line clipEdge = {fenetre.vertices[i], fenetre.vertices[(i + 1) % fenetre.nbVertices]};
 
-		inputList->vertices = outputList->vertices;
-		inputList->verticesCount = outputList->verticesCount;
+		copyVertices(inputList->vertices, outputList->vertices, outputList->nbVertices);//inputList->vertices = outputList->vertices;
+		inputList->nbVertices = outputList->nbVertices;
 
-		outputList->verticesCount = 0;
+		outputList->nbVertices = 0;
 
-		Point S = inputList->vertices[inputList->verticesCount - 1];
+		Point S = inputList->vertices[inputList->nbVertices - 1];
+		//printf("Point S : (%d, %d)\n", S.x, S.y);
 
-		for(int j = 0; j < inputList->verticesCount; j++) {
+		for(int j = 0; j < inputList->nbVertices; j++) {
 			Point E = inputList->vertices[j];
+			//printf("Point E : (%d, %d)\n", E.x, E.y);
 
 			if(visible(E, clipEdge.startPoint, clipEdge.endPoint)) {
 				if(!visible(S, clipEdge.startPoint, clipEdge.endPoint)) {
-					printf("Coucou\n");
-					outputList->vertices[outputList->verticesCount] = returnPoint(S, E, clipEdge.startPoint, clipEdge.endPoint);
-					outputList->verticesCount++;
+					outputList->vertices[outputList->nbVertices] = returnPoint(S, E, clipEdge.startPoint, clipEdge.endPoint);
+					outputList->nbVertices++;
 				}
-				printf("Coucou\n");
-				outputList->vertices[outputList->verticesCount] = E;
-				outputList->verticesCount++;
+				outputList->vertices[outputList->nbVertices] = E;
+				outputList->nbVertices++;
 			}
 			else if(visible(S, clipEdge.startPoint, clipEdge.endPoint)) {
 				if(isCoupe(S, E, clipEdge.startPoint, clipEdge.endPoint)) {
-					printf("Coucou\n");
-					outputList->vertices[outputList->verticesCount] = returnPoint(S, E, clipEdge.startPoint, clipEdge.endPoint);
-					outputList->verticesCount++;
+					outputList->vertices[outputList->nbVertices] = returnPoint(S, E, clipEdge.startPoint, clipEdge.endPoint);
+					outputList->nbVertices++;
 				}
 			}
 			S = E;
 		}
 	}
 
-	entree->verticesCount = outputList->verticesCount;
-	entree->vertices = outputList->vertices;
+	entree->nbVertices = outputList->nbVertices;
+	copyVertices(entree->vertices, outputList->vertices, entree->nbVertices);//entree->vertices = outputList->vertices;
 
 	printf("Poly decoupe : \n");
-	for(int i = 0; i < entree->verticesCount; i++) {
+	for(int i = 0; i < entree->nbVertices; i++) {
 		printf("Point %d : (%d, %d)\n", i, entree->vertices[i].x, entree->vertices[i].y);
 	}
 	printf("Fin poly decoupe\n");
+}
+
+void copyVertices(Point dest[], Point src[], int size) {
+	for(int i = 0; i < size; i++) {
+		Point temp = {src[i].x, src[i].y};
+		dest[i] = temp;
+	}
+	return src;
 }
 
 

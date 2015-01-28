@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../headers/utils.h"
+#include "utils.h"
 
 #include<stdlib.h>
 #include<stdio.h>
@@ -23,6 +23,7 @@ int visible(Point S, Point Fi, Point Fii);
 //PL contient en entrée le polygone a decouper et en sortie le polygone decoupé
 void decoupageWiki(CustomPolygon* entree, CustomPolygon fenetre);
 
+void copyVertices(Point *dest[], Point src[], int size);
 
 
 
