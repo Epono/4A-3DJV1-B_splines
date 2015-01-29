@@ -108,14 +108,13 @@ void mouse(int button, int state, int x, int y) {
 			case polygonCreationState:
 				polygon.vertices[0] = point;
 				polygon.nbVertices = 1;
-				creationState++;
 				break;
 			case windowCreationState:
 				window.vertices[0] = point;
 				window.nbVertices = 1;
-				creationState++;
 				break;
 			}
+			creationState++;
 			break;
 		case waitingForNextClick:
 			point.x = x, point.y = y;
