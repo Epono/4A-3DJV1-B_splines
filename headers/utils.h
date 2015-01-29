@@ -6,7 +6,8 @@
 
 // Represents the state of the creation action
 typedef enum creationToolState {
-	polygonCreationState
+	polygonCreationState,
+	windowCreationState
 };
 
 // Represents the state of the creation action

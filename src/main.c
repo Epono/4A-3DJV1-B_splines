@@ -23,9 +23,8 @@
 
 int creationState = waitingForFirstClick;
 
-int creationToolState = polygonCreationState;
+int creationToolState = polygonCreationState; //State to know wich part are we drawing (window or polygon)
 
-int numPolygons = -1;						// Number of polygons to display
 CustomPolygon polygon;				// 2D array of polygons
 float polygonColor[3] = {0.5f, 0.5f, 0};	// Polygons color
 
@@ -40,7 +39,7 @@ void keyboard(unsigned char key, int x, int y);		// manages keyboard inputs
 void mouse(int bouton, int etat, int x, int y);		// manages mouse clicks
 void motion(int x, int y);							// manages mouse motions
 
-void drawPolygons();								// draws the polygons
+void drawPolygon(CustomPolygon cp, float color[]);								// draws the polygons
 void drawWindow();									// draws the window (algorithm of my bite)
 void createMenu();
 void menu(int opt);
@@ -78,22 +77,22 @@ int main(int argc, char **argv) {
 }
 
 /*
- * Function in charge of refreshing the display of the window
- */
+* Function in charge of refreshing the display of the window
+*/
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT);	// Clears the display
 	glColor3f(1.0, 0.0, 0.0);		// Sets the drawing color
 
-	drawPolygons();					// Draws polygons
-	drawWindow();					// Draws the window (for the kniffey algorithm)
+	drawPolygon(polygon, polygonColor); //Draw the polygon
+	drawPolygon(window, windowColor); // Draw the window
 	glutSwapBuffers();				// Double buffer ?
 
 	glFlush();						// Forces refresh ?
 }
 
 /*
- * Function in charge of handling mouse events (clicking only, not dragging)
- */
+* Function in charge of handling mouse events (clicking only, not dragging)
+*/
 void mouse(int button, int state, int x, int y) {
 	Point point;
 
@@ -104,17 +103,30 @@ void mouse(int button, int state, int x, int y) {
 			printf("Coords clicked (pending state) : (%d, %d)\n", x, y);
 			break;
 		case waitingForFirstClick:
-			printf("Start of polygon selected : (%d, %d)\n", x, y);
-			++numPolygons;
 			point.x = x, point.y = y;
-			polygon.vertices[0] = point;
-			polygon.nbVertices = 1;
-			creationState++;
+			switch(creationToolState) {
+			case polygonCreationState:
+				polygon.vertices[0] = point;
+				polygon.nbVertices = 1;
+				creationState++;
+				break;
+			case windowCreationState:
+				window.vertices[0] = point;
+				window.nbVertices = 1;
+				creationState++;
+				break;
+			}
 			break;
 		case waitingForNextClick:
-			printf("New point selected : (%d, %d)\n", x, y);
 			point.x = x, point.y = y;
-			polygon.vertices[polygon.nbVertices++] = point;
+			switch(creationToolState) {
+			case polygonCreationState:
+				polygon.vertices[polygon.nbVertices++] = point;
+				break;
+			case windowCreationState:
+				window.vertices[window.nbVertices++] = point;
+				break;
+			}
 			break;
 		}
 	}
@@ -141,8 +153,12 @@ void motion(int x, int y) {
 */
 void keyboard(unsigned char key, int x, int y) {
 	switch(key) {
-	case 'v': // Validate the polygon
-		creationState = pending;
+	case 'w': // Switch to polygon creation	
+		if(creationToolState != windowCreationState || creationState != waitingForFirstClick) {
+			printf("Switching to window creation\n");
+			creationToolState = windowCreationState;
+			creationState = waitingForFirstClick;
+		}
 		break;
 	case 'p': // Switch to polygon creation	
 		if(creationToolState != polygonCreationState || creationState != waitingForFirstClick) {
@@ -151,8 +167,11 @@ void keyboard(unsigned char key, int x, int y) {
 			creationState = waitingForFirstClick;
 		}
 		break;
+	case 'v': // Validates
+		creationState = pending;
+		break;
 	case 'c': // Clear the window
-		numPolygons = -1;
+		creationToolState = windowCreationState;
 		creationState = waitingForFirstClick;
 		glutPostRedisplay();
 		break;
@@ -165,8 +184,8 @@ void keyboard(unsigned char key, int x, int y) {
 
 //TODO
 /*
- * Creates the menu available via right-click
- */
+* Creates the menu available via right-click
+*/
 void createMenu() {
 	int mainMenu, colorMenu;
 	colorMenu = glutCreateMenu(colorPicking);
@@ -186,15 +205,15 @@ void createMenu() {
 
 //TODO
 /*
- * Function to handle menu
- */
+* Function to handle menu
+*/
 void menu(int opt) {
 	switch(opt) {
-	case 1:
-		printf("Tracage de polygone\n");
+	case 1: //Creation de polygone
+		creationToolState = polygonCreationState;
 		break;
-	case 2:
-		printf("Tracage de fenetre\n");
+	case 2: // Creation de fenetre
+		creationToolState = windowCreationState;
 		break;
 	case 3:
 		printf("Algorithme de fenetrage\n");
@@ -236,81 +255,19 @@ void colorPicking(int option) {
 	display();
 }
 
-void drawPolygons() {
-	for(int i = 0; i <= numPolygons; i++) {
-		// Draws vertices of the polygon
-		glBegin(GL_POINTS);
-		for(int j = 0; j < polygon.nbVertices; j++) {
-			glVertex2i(polygon.vertices[j].x, polygon.vertices[j].y);
-			glRasterPos2f(polygon.vertices[j].x, polygon.vertices[j].y + 10);
-			for(int i = 0; i < 10; i++) {
-				char truc;
-				if(i == 0) {
-					truc = '(';
-				}
-				else if(i == 4) {
-					truc = ',';
-				}
-				else if(i == 5) {
-					truc = ' ';
-				}
-				else if(i == 9) {
-					truc = ')';
-				}
-				else if(i > 0 && i << 4) {
-					char c[3];
-					//sprintf(c, "%d", polygon.vertices[j].x);
-					truc = '0';
-				}
-				else if(i > 5 && i << 9) {
-					char c[3];
-					//sprintf(c, "%d", polygon.vertices[j].x);
-					truc = '0';
-				}
-				printf("%c", truc);
-				glutBitmapCharacter(GLUT_BITMAP_9_BY_15, truc);
-			}
-		}
-		glEnd();
-
-		// Draws the polygon
-		glColor3fv(polygonColor);
-		glBegin(GL_LINE_STRIP);
-		for(int j = 0; j < polygon.nbVertices; j++) {
-			glVertex2i(polygon.vertices[j].x, polygon.vertices[j].y);
-		}
-		glVertex2i(polygon.vertices[0].x, polygon.vertices[0].y);
-		glEnd();
-	}
-}
-
-void drawWindow() {
-	Point A = {100, 100};
-	Point B = {300, 100};
-	Point C = {300, 300};
-	Point D = {100, 300};
-	Point points[] = {A, B, C, D};
-	window.nbVertices = 4;
-	window.vertices[0] = points[0];
-	window.vertices[1] = points[1];
-	window.vertices[2] = points[2];
-	window.vertices[3] = points[3];
-
-
-	// Draws vertices of the window
+void drawPolygon(CustomPolygon cp, float color[]) {
+	// Draws vertices of the polygon
 	glBegin(GL_POINTS);
-	for(int j = 0; j < 4; j++) {
-		glVertex2i(window.vertices[j].x, window.vertices[j].y);
-	}
+	for(int j = 0; j < cp.nbVertices; j++)
+		glVertex2i(cp.vertices[j].x, cp.vertices[j].y);
 	glEnd();
 
-	// Draws the window
-	glColor3fv(windowColor);
+	// Draws the polygon
+	glColor3fv(color);
 	glBegin(GL_LINE_STRIP);
-	for(int j = 0; j < 4; j++) {
-		glVertex2i(window.vertices[j].x, window.vertices[j].y);
-	}
-	glVertex2i(window.vertices[0].x, window.vertices[0].y);
+	for(int j = 0; j < cp.nbVertices; j++)
+		glVertex2i(cp.vertices[j].x, cp.vertices[j].y);
+	glVertex2i(cp.vertices[0].x, cp.vertices[0].y);
 	glEnd();
 }
 
@@ -352,4 +309,15 @@ truc = c[i - 6];
 }
 glutBitmapCharacter(GLUT_BITMAP_9_BY_15, truc);
 }
+
+Point A = {100, 100};
+Point B = {300, 100};
+Point C = {300, 300};
+Point D = {100, 300};
+Point points[] = {A, B, C, D};
+window.nbVertices = 4;
+window.vertices[0] = points[0];
+window.vertices[1] = points[1];
+window.vertices[2] = points[2];
+window.vertices[3] = points[3];
 */
