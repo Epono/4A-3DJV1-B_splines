@@ -5,9 +5,15 @@
 #include<stdlib.h>
 #include<stdio.h>
 
-#include "../headers/utils.h"
-#include "../headers/decoupage.h"
+#include "utils.h"
+#include "decoupage.h"
 #include <math.h>
+
+void normale(Point, Point, Point*);
+int coupe(Point, Point, Point, Point);
+Point intersection(Point, Point, Point, Point);
+int visible(Point, Point, Point);
+void SutherlandHodgman(CustomPolygon, CustomPolygon, CustomPolygon *);
 
 // Returns 1 if the lines intersect, otherwise 0. In addition, if the lines 
 // intersect the intersection point may be stored in the floats i_x and i_y.
@@ -16,9 +22,6 @@ int isCoupe(Point P0, Point P1, Point P2, Point P3);
 // Returns 1 if the lines intersect, otherwise 0. In addition, if the lines 
 // intersect the intersection point may be stored in the floats i_x and i_y.
 Point returnPoint(Point P0, Point P1, Point P2, Point P3);
-
-
-int visible(Point S, Point Fi, Point Fii);
 
 //PL contient en entrée le polygone a decouper et en sortie le polygone decoupé
 void decoupageWiki(CustomPolygon* entree, CustomPolygon fenetre);

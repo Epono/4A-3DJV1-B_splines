@@ -26,13 +26,14 @@ int creationState = waitingForFirstClick;
 int creationToolState = polygonCreationState; //State to know wich part are we drawing (window or polygon)
 
 CustomPolygon polygon;				// 2D array of polygons
+CustomPolygon polygonFenetre;				// 2D array of polygons
 float polygonColor[3] = {0.5f, 0.5f, 0};	// Polygons color
 
 CustomPolygon window;						// Window used to cut another polygon
 float windowColor[3] = {0, 0.5f, 0.5f};		// Window color
 
 int presse = 0;								// Stores if the mouse is dragging
-
+int fenetrage = 0;
 /* Functions prototypes */
 void display();										// manages displaying
 void keyboard(unsigned char key, int x, int y);		// manages keyboard inputs
@@ -82,8 +83,11 @@ int main(int argc, char **argv) {
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT);	// Clears the display
 	glColor3f(1.0, 0.0, 0.0);		// Sets the drawing color
-
-	drawPolygon(polygon, polygonColor); //Draw the polygon
+	
+	if (fenetrage == 1)
+		drawPolygon(polygonFenetre, polygonColor); //Draw the polygon
+	else
+		drawPolygon(polygon, polygonColor);
 	drawPolygon(window, windowColor); // Draw the window
 	glutSwapBuffers();				// Double buffer ?
 
@@ -216,7 +220,8 @@ void menu(int opt) {
 		break;
 	case 3:
 		printf("Algorithme de fenetrage\n");
-		decoupageWiki(&polygon, window);
+		fenetrage = 1;
+		SutherlandHodgman(polygon, window, &polygonFenetre);
 		glutPostRedisplay();
 		break;
 	case 4:

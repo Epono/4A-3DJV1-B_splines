@@ -5,12 +5,102 @@
 #include "utils.h"
 #include "decoupage.h"
 
-void normal(Point p1, Point p2, Point * normal)
+void normale(Point p1, Point p2, Point * normal)
 {
 	normal->x = p2.y - p1.y;
 	normal->y = -(p2.x - p1.x);
 }
 
+
+int coupe(Point s, Point pj, Point fi1, Point fi2)
+{
+	int mat11 = pj.x - s.x, mat12 = fi1.x - fi2.x, mat21 = pj.y - s.y, mat22 = (fi1.y - fi2.y);
+
+	int det = (mat11 * mat22 - mat21 * mat12);
+	if (det != 0)
+	{
+		int invmat11 = (1 / det) * mat22, invmat12 = (1 / det) * -mat12;
+		int t = invmat11 * (fi1.x - s.x) + invmat12 * (fi1.y - s.y);
+		if (t >= 0 && t <= 1)
+			return 0;
+	}
+	return 1;
+}
+
+Point intersection(Point s, Point pj, Point fi1, Point fi2)
+{
+	int mat11 = pj.x - s.x, mat12 = fi1.x - fi2.x, mat21 = pj.y - s.y, mat22 = (fi1.y - fi2.y);
+
+	int det = (mat11 * mat22 - mat21 * mat12);
+
+	float invmat11 = (1.0f / det) * mat22, invmat12 = (1.0f / det) * -mat12;
+	float t = invmat11 * (fi1.x - s.x) + invmat12 * (fi1.y - s.y);
+	
+	Point ret;
+	ret.x = (1 - t) * s.x + t * pj.x;
+	ret.y = (1 - t) * s.y + t * pj.y;
+
+	return ret;
+}
+
+int visible(Point s, Point fi1, Point fi2)
+{
+	Point n;
+	normale(fi1, fi2, &n);
+
+	int pscal = n.x * (s.x - fi1.x) + n.y * (s.y - fi1.y);
+	if (pscal >= 0)
+		return 0;
+
+	return 1;
+}
+
+void SutherlandHodgman(CustomPolygon PL, CustomPolygon PW, CustomPolygon *PS)
+{
+	int i, j, n2;
+	Point S, F, I;
+	for (i = 0; i < PW.nbVertices - 1; ++i)
+	{
+		n2 = 0;
+		PS->nbVertices = 0;
+		for (j = 0; j < PL.nbVertices; ++j)
+		{
+			if (j == 0)
+				F = PL.vertices[0];
+			else
+			{
+				if (coupe(S, PL.vertices[j], PW.vertices[i], PW.vertices[i + 1]) == 0)
+				{
+					I = intersection(S, PL.vertices[j], PW.vertices[i], PW.vertices[i + 1]);
+					//Charger(I, PS)
+					PS->vertices[PS->nbVertices++] = I;
+					n2++;
+				}
+			}
+			S = PL.vertices[j];
+			if (visible(S, PW.vertices[i], PW.vertices[i + 1]) == 0)
+			{
+				//Charger(S, PS)
+				PS->vertices[PS->nbVertices++] = S;
+				n2++;
+			}
+		}
+		if (n2 > 0)
+		{
+			if (coupe(S, F, PW.vertices[i], PW.vertices[i + 1]))
+			{
+				I = intersection(S, F, PW.vertices[i], PW.vertices[i + 1]);
+				//Charger(I, PS)
+				PS->vertices[PS->nbVertices++] = I;
+				n2++;
+			}
+			PL = *PS;
+			PL.nbVertices = n2;
+		}
+	}
+}
+
+/*
 // Returns 1 if the lines intersect, otherwise 0. In addition, if the lines 
 // intersect the intersection point may be stored in the floats i_x and i_y.
 int isCoupe(Point P0, Point P1, Point P2, Point P3) {
@@ -26,7 +116,10 @@ int isCoupe(Point P0, Point P1, Point P2, Point P3) {
 
 	return 0;
 }
+*/
 
+
+/*
 // Returns 1 if the lines intersect, otherwise 0. In addition, if the lines 
 // intersect the intersection point may be stored in the floats i_x and i_y.
 Point returnPoint(Point P0, Point P1, Point P2, Point P3) {
@@ -41,8 +134,8 @@ Point returnPoint(Point P0, Point P1, Point P2, Point P3) {
 	return intersectPoint;
 }
 
-
-int visible(Point S, Point Fi, Point Fii) {
+*/
+/*int visible(Point S, Point Fi, Point Fii) {
 	//retournant un booléen si S est visible par rapport à(Fi Fi+1)
 	// Si le point S est du côté intérieur du polygone par rapport aux côtés Fi Fi+1
 	//Vector A = {Fi.x - S.x, Fi.y - S.y};
@@ -87,7 +180,8 @@ int visible(Point S, Point Fi, Point Fii) {
 		return 1;
 	}
 }
-
+*/
+/*
 //PL contient en entrée le polygone a decouper et en sortie le polygone decoupé
 void decoupageWiki(CustomPolygon* entree, CustomPolygon fenetre) {
 	CustomPolygon* outputList = (CustomPolygon*) malloc(sizeof(CustomPolygon));
@@ -148,7 +242,7 @@ void copyVertices(Point dest[], Point src[], int size) {
 }
 
 
-
+*/
 
 
 
