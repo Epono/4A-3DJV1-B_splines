@@ -45,6 +45,8 @@ void drawWindow();									// draws the window (algorithm of my bite)
 void createMenu();
 void menu(int opt);
 void colorPicking(int option);
+void write();										// Writes on the top left what's happening
+void writePointCoordinates(Point p);
 // Debug
 void printPolygon(int polygonCount);
 
@@ -83,8 +85,10 @@ int main(int argc, char **argv) {
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT);	// Clears the display
 	glColor3f(1.0, 0.0, 0.0);		// Sets the drawing color
-	
-	if (fenetrage == 1)
+
+	write();
+
+	if(fenetrage == 1)
 		drawPolygon(polygonFenetre, polygonColor); //Draw the polygon
 	else
 		drawPolygon(polygon, polygonColor);
@@ -176,6 +180,9 @@ void keyboard(unsigned char key, int x, int y) {
 	case 'c': // Clear the window
 		creationToolState = windowCreationState;
 		creationState = waitingForFirstClick;
+		window.nbVertices = 0;
+		polygon.nbVertices = 0;
+		polygonFenetre.nbVertices = 0;
 		glutPostRedisplay();
 		break;
 	case 27:
@@ -183,6 +190,8 @@ void keyboard(unsigned char key, int x, int y) {
 	case 'q':
 		exit(0);
 	}
+
+	glutPostRedisplay(); // Rafraichissement de l'affichage
 }
 
 //TODO
@@ -283,6 +292,67 @@ void printPolygon(int polygonCount) {
 	printf("**************** End Polygon **************\n");
 }
 
+void write() {
+	char* truc;
+	if(creationToolState == windowCreationState) {
+		truc = "Drawing the window";
+	}
+	else if(creationToolState == polygonCreationState) {
+		truc = "Drawing the polygon";
+	}
+	else {
+		truc = "Unknown action";
+	}
+	glRasterPos2f(5, 20);
+
+	for(int i = 0; truc[i] != '\0'; i++)
+		glutBitmapCharacter(GLUT_BITMAP_9_BY_15, truc[i]);
+
+	Point p = {50, 50};
+	writePointCoordinates(p);
+}
+
+/*
+void writePointCoordinates(Point p) {
+char *str0 = "(";
+printf("%s\n", str0);
+
+char str1[3];
+sprintf_s(str1, sizeof(char) * 3, "%d", p.x);
+printf("%s\n", str1);
+
+char *str2 = ", ";
+printf("%s\n", str2);
+
+char str3[3];
+sprintf_s(str3, sizeof(char) * 3, "%d", p.y);
+printf("%s\n", str3);
+
+char *str4 = ")";
+printf("%s\n", str4);
+
+//char *str[1000];
+char* str = (char*) malloc(1000 * sizeof(char));
+strcat_s(str, 1000 * sizeof(char), str0);
+strcat_s(str, 1000 * sizeof(char), str1);
+strcat_s(str, 1000 * sizeof(char), str2);
+strcat_s(str, 1000 * sizeof(char), str3);
+strcat_s(str, 1000 * sizeof(char), str4);
+str[999] = '\0';
+
+
+//int size = strlen(str1);
+//size++;
+//int nieuwSize = size + 4;
+//char* nieuw = (char*) malloc(nieuwSize);
+//strcpy_s(nieuw, nieuwSize, str1);
+//nieuw[size] = '\0';
+//strcat_s(nieuw, nieuwSize, ".cpt"); // <-- crash
+//puts(nieuw);
+
+
+}
+*/
 
 
 /*
