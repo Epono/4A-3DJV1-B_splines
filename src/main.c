@@ -44,7 +44,7 @@ void keyboard(unsigned char key, int x, int y);		// manages keyboard inputs
 void mouse(int bouton, int etat, int x, int y);		// manages mouse clicks
 void motion(int x, int y);							// manages mouse motions
 
-void drawPolygon(CustomPolygon cp, float color[]);								// draws the polygons
+void drawPolygon(CustomPolygon cp, float color[], int lineSize);								// draws the polygons
 void drawWindow();									// draws the window (algorithm of my bite)
 void createMenu();
 void menu(int opt);
@@ -94,10 +94,12 @@ void display() {
 
 	write();
 
-	if(fenetrage == 1)
-		drawPolygon(polygonFenetre, polygonColor); //Draw the polygon
-	drawPolygon(polygon, polygonColor);
-	drawPolygon(window, windowColor); // Draw the window
+	if(fenetrage == 1) {
+		SutherlandHodgman(polygon, window, &polygonFenetre);
+		drawPolygon(polygonFenetre, polygonColor, 2); //Draw the polygon
+	}
+	drawPolygon(polygon, polygonColor, 1);
+	drawPolygon(window, windowColor, 1); // Draw the window
 	glutSwapBuffers();				// Double buffer ?
 
 	glFlush();						// Forces refresh ?
@@ -307,13 +309,14 @@ void setPolygonColor(float colors[3], float r, float g, float b)
 	*(colors + 2) = b;
 }
 
-void drawPolygon(CustomPolygon cp, float color[]) {
+void drawPolygon(CustomPolygon cp, float color[], int lineSize) {
 	// Draws vertices of the polygon
 	glBegin(GL_POINTS);
 	for(int j = 0; j < cp.nbVertices; j++)
 		glVertex2i(cp.vertices[j].x, cp.vertices[j].y);
 	glEnd();
 
+	glLineWidth(lineSize);
 	// Draws the polygon
 	glColor3fv(color);
 	glBegin(GL_LINE_STRIP);
