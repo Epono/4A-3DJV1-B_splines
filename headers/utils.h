@@ -1,5 +1,4 @@
-#ifndef UTILS_H
-#define UTILS_H
+#pragma once
 
 /**
  * Contains the definition of the differents data structures we're gonna need.
@@ -15,7 +14,8 @@ typedef enum creationToolState {
 typedef enum creationState {
 	waitingForFirstClick,
 	waitingForNextClick,
-	pending
+	pending,
+	resize
 };
 
 // Represents a 2D point (x, y)
@@ -36,4 +36,8 @@ typedef struct CustomPolygon {
 	int nbVertices;
 } CustomPolygon;
 
-#endif //UTILS_H
+// Represents a the points to fill
+typedef struct PointsToFill {
+	Point pointsToFill[20000];
+	int nbPointsToFill;
+} PointsToFill;

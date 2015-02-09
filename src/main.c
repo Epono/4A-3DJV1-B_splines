@@ -1,3 +1,17 @@
+/*******************************************************/
+/*					didac.c							   */
+/*******************************************************/
+/*													   */
+/*	Préambule OpenGL sous Glut			               */
+/*  ESGI : 2I année 						           */
+/*													   */
+/*******************************************************/
+/*													   */
+/*  Fenêtre graphique 2D vierge                        */
+/*  Evènement souris actif, q pour quitter             */
+/*													   */
+/*******************************************************/
+
 #include<windows.h>
 #include<GL/glut.h>
 #include<stdlib.h>
@@ -17,21 +31,29 @@ float polygonColor[3] = {0.5f, 0.5f, 0};	// Polygons color
 
 CustomPolygon window;						// Window used to cut another polygon
 float windowColor[3] = {0, 0.5f, 0.5f};		// Window color
+int windowVerticeToMove = -1;
+
+PointsToFill pointsToFill;					// Points to fill
+float fillingColor[3] = {0.5f, 0.5f, 0};	// Filling color
 
 int presse = 0;								// Stores if the mouse is dragging
 int fenetrage = 0;
-
 /* Functions prototypes */
 void display();										// manages displaying
 void keyboard(unsigned char key, int x, int y);		// manages keyboard inputs
 void mouse(int bouton, int etat, int x, int y);		// manages mouse clicks
 void motion(int x, int y);							// manages mouse motions
 
-void drawPolygon(CustomPolygon cp, float color[]);	// draws the polygons
+void drawPolygon(CustomPolygon cp, float color[]);								// draws the polygons
+void drawWindow();									// draws the window (algorithm of my bite)
 void createMenu();
 void menu(int opt);
 void colorPicking(int option);
-void setPolygonColor(float colors[3], float r, float g, float b);
+void write();										// Writes on the top left what's happening
+void writePointCoordinates(Point p);
+void drawPointsToFill();
+// Debug
+void printPolygon(int polygonCount);
 
 int main(int argc, char **argv) {
 	//Glut and Window Initialization
@@ -39,7 +61,7 @@ int main(int argc, char **argv) {
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);	// RGB display mode, with depth
 	glutInitWindowSize(500, 500);								// Sets window's dimensions
 	glutInitWindowPosition(100, 100);							// Positions the window
-	glutCreateWindow("Projet 4A3DJV");						// Title of the window
+	glutCreateWindow("FunStuffWithOpenGL");						// Title of the window
 
 	gluOrtho2D(0, 500, 500, 0);									// 2D orthogonal frame with xMin, xMax, yMin, yMax
 
@@ -68,8 +90,10 @@ int main(int argc, char **argv) {
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT);	// Clears the display
 	glColor3f(1.0, 0.0, 0.0);		// Sets the drawing color
-	
-	if (fenetrage == 1)
+
+	write();
+
+	if(fenetrage == 1)
 		drawPolygon(polygonFenetre, polygonColor); //Draw the polygon
 	else
 		drawPolygon(polygon, polygonColor);
@@ -87,6 +111,7 @@ void mouse(int button, int state, int x, int y) {
 
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
 		presse = 1;
+		windowVerticeToMove = -1;
 		switch(creationState) {
 		case pending:
 			printf("Coords clicked (pending state) : (%d, %d)\n", x, y);
@@ -116,17 +141,34 @@ void mouse(int button, int state, int x, int y) {
 				break;
 			}
 			break;
+		case resize:
+			// nothing
+			break;
 		}
 	}
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
 		presse = 0;
+		if(creationState == resize) {
+			for(int i = 0; i < window.nbVertices; i++) {
+				int tempX = window.vertices[i].x;
+				int tempY = window.vertices[i].y;
+				int distance = 10;
+				if(abs(tempX - x) < distance && abs(tempY - y) < distance) {
+					windowVerticeToMove = i;
+					break;
+				}
+			}
+		}
 	}
 	glutPostRedisplay();		// Refresh display
 }
 
 void motion(int x, int y) {
-	if(presse) {
-
+	if(creationState == resize) {
+		if(windowVerticeToMove != -1) {
+			window.vertices[windowVerticeToMove].x = x;
+			window.vertices[windowVerticeToMove].y = y;
+		}
 	}
 	//xold = x; //sauvegarde des valeurs courantes de la position de la souris
 	//yold = y;
@@ -161,15 +203,27 @@ void keyboard(unsigned char key, int x, int y) {
 	case 'c': // Clear the window
 		creationToolState = windowCreationState;
 		creationState = waitingForFirstClick;
-		glutPostRedisplay();
+		window.nbVertices = 0;
+		polygon.nbVertices = 0;
+		polygonFenetre.nbVertices = 0;
+		break;
+	case 'r':
+		//Resize the window
+		if(creationState != resize) {
+			printf("Switching to resizing window\n");
+			creationState = resize;
+		}
 		break;
 	case 27:
 		exit(0);
 	case 'q':
 		exit(0);
 	}
+
+	glutPostRedisplay(); // Rafraichissement de l'affichage
 }
 
+//TODO
 /*
 * Creates the menu available via right-click
 */
@@ -190,6 +244,7 @@ void createMenu() {
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
+//TODO
 /*
 * Function to handle menu
 */
@@ -220,24 +275,21 @@ void colorPicking(int option) {
 	switch(option) {
 	case 0:
 		printf("Vert\n");
-		if (creationToolState == polygonCreationState)
-			setPolygonColor(&polygonColor, 0.f, 1.f, 0.f);
-		else
-			setPolygonColor(&windowColor, 0.f, 1.f, 0.f);
+		polygonColor[0] = 0.f;
+		polygonColor[1] = 1.f;
+		polygonColor[2] = 0.f;
 		break;
 	case 1:
 		printf("Bleu\n");
-		if (creationToolState == polygonCreationState)
-			setPolygonColor(&polygonColor, 0.f, 0.f, 1.f);
-		else
-			setPolygonColor(&windowColor, 0.f, 0.f, 1.f);
+		polygonColor[0] = 0.f;
+		polygonColor[1] = 0.f;
+		polygonColor[2] = 1.f;
 		break;
 	case 2:
 		printf("Rouge\n");
-		if (creationToolState == polygonCreationState)
-			setPolygonColor(&polygonColor, 1.f, 0.f, 0.f);
-		else
-			setPolygonColor(&windowColor, 1.f, 0.f, 0.f);
+		polygonColor[0] = 1.f;
+		polygonColor[1] = 0.f;
+		polygonColor[2] = 0.f;
 		break;
 	default:
 		break;
@@ -261,13 +313,6 @@ void drawPolygon(CustomPolygon cp, float color[]) {
 	glEnd();
 }
 
-void setPolygonColor(float colors[3], float r, float g, float b)
-{
-	*colors = r;
-	*(colors + 1) = g;
-	*(colors + 2) = b;
-}
-
 void printPolygon(int polygonCount) {
 	printf("**************** Polygon **************\n");
 	for(int i = 0; i < polygon.nbVertices; i++) {
@@ -276,6 +321,109 @@ void printPolygon(int polygonCount) {
 	printf("**************** End Polygon **************\n");
 }
 
+void write() {
+	char* truc;
+	if(creationState == resize) {
+		truc = "Resizing the window";
+	}
+	else if(creationToolState == windowCreationState) {
+		truc = "Drawing the window";
+	}
+	else if(creationToolState == polygonCreationState) {
+		truc = "Drawing the polygon";
+	}
+	else {
+		truc = "Unknown action";
+	}
+	glRasterPos2f(5, 20);
+
+	for(int i = 0; truc[i] != '\0'; i++)
+		glutBitmapCharacter(GLUT_BITMAP_9_BY_15, truc[i]);
+
+	//Point p = {50, 50};
+	//writePointCoordinates(p);
+}
+
+void drawPointsToFill() {
+
+
+	Point A = {100, 100};
+	Point B = {200, 200};
+	Point C = {200, 100};
+	Point D = {100, 200};
+	Point points[] = {A, B, C, D};
+
+	CustomPolygon pp;
+	pp.nbVertices = 4;
+	pp.vertices[0] = points[0];
+	pp.vertices[1] = points[1];
+	pp.vertices[2] = points[2];
+	pp.vertices[3] = points[3];
+
+	glBegin(GL_POINTS);
+	for(int j = 0; j < pp.nbVertices; j++) {
+		glVertex2i(pp.vertices[j].x, pp.vertices[j].y);
+	}
+	glEnd();
+
+	pointsToFill = remplissageLCA(pp);
+
+
+	glPointSize(1.0);
+
+	glColor3fv(fillingColor);
+
+	// Draws vertices of the polygon
+	glBegin(GL_POINTS);
+	for(int j = 0; j < pointsToFill.nbPointsToFill; j++)
+		glVertex2i(pointsToFill.pointsToFill[j].x, pointsToFill.pointsToFill[j].y);
+	glEnd();
+
+
+	glPointSize(4.0);
+}
+
+/*
+void writePointCoordinates(Point p) {
+char *str0 = "(";
+printf("%s\n", str0);
+
+char str1[3];
+sprintf_s(str1, sizeof(char) * 3, "%d", p.x);
+printf("%s\n", str1);
+
+char *str2 = ", ";
+printf("%s\n", str2);
+
+char str3[3];
+sprintf_s(str3, sizeof(char) * 3, "%d", p.y);
+printf("%s\n", str3);
+
+char *str4 = ")";
+printf("%s\n", str4);
+
+//char *str[1000];
+char* str = (char*) malloc(1000 * sizeof(char));
+strcat_s(str, 1000 * sizeof(char), str0);
+strcat_s(str, 1000 * sizeof(char), str1);
+strcat_s(str, 1000 * sizeof(char), str2);
+strcat_s(str, 1000 * sizeof(char), str3);
+strcat_s(str, 1000 * sizeof(char), str4);
+str[999] = '\0';
+
+
+//int size = strlen(str1);
+//size++;
+//int nieuwSize = size + 4;
+//char* nieuw = (char*) malloc(nieuwSize);
+//strcpy_s(nieuw, nieuwSize, str1);
+//nieuw[size] = '\0';
+//strcat_s(nieuw, nieuwSize, ".cpt"); // <-- crash
+//puts(nieuw);
+
+
+}
+*/
 
 
 /*
