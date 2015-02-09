@@ -14,7 +14,8 @@ typedef enum creationToolState {
 typedef enum creationState {
 	waitingForFirstClick,
 	waitingForNextClick,
-	pending
+	pending,
+	resize
 };
 
 // Represents a 2D point (x, y)

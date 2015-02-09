@@ -31,6 +31,7 @@ float polygonColor[3] = {0.5f, 0.5f, 0};	// Polygons color
 
 CustomPolygon window;						// Window used to cut another polygon
 float windowColor[3] = {0, 0.5f, 0.5f};		// Window color
+int windowVerticeToMove = -1;
 
 PointsToFill pointsToFill;					// Points to fill
 float fillingColor[3] = {0.5f, 0.5f, 0};	// Filling color
@@ -110,6 +111,7 @@ void mouse(int button, int state, int x, int y) {
 
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
 		presse = 1;
+		windowVerticeToMove = -1;
 		switch(creationState) {
 		case pending:
 			printf("Coords clicked (pending state) : (%d, %d)\n", x, y);
@@ -139,17 +141,34 @@ void mouse(int button, int state, int x, int y) {
 				break;
 			}
 			break;
+		case resize:
+			// nothing
+			break;
 		}
 	}
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
 		presse = 0;
+		if(creationState == resize) {
+			for(int i = 0; i < window.nbVertices; i++) {
+				int tempX = window.vertices[i].x;
+				int tempY = window.vertices[i].y;
+				int distance = 10;
+				if(abs(tempX - x) < distance && abs(tempY - y) < distance) {
+					windowVerticeToMove = i;
+					break;
+				}
+			}
+		}
 	}
 	glutPostRedisplay();		// Refresh display
 }
 
 void motion(int x, int y) {
-	if(presse) {
-
+	if(creationState == resize) {
+		if(windowVerticeToMove != -1) {
+			window.vertices[windowVerticeToMove].x = x;
+			window.vertices[windowVerticeToMove].y = y;
+		}
 	}
 	//xold = x; //sauvegarde des valeurs courantes de la position de la souris
 	//yold = y;
@@ -187,7 +206,13 @@ void keyboard(unsigned char key, int x, int y) {
 		window.nbVertices = 0;
 		polygon.nbVertices = 0;
 		polygonFenetre.nbVertices = 0;
-		glutPostRedisplay();
+		break;
+	case 'r':
+		//Resize the window
+		if(creationState != resize) {
+			printf("Switching to resizing window\n");
+			creationState = resize;
+		}
 		break;
 	case 27:
 		exit(0);
@@ -298,7 +323,10 @@ void printPolygon(int polygonCount) {
 
 void write() {
 	char* truc;
-	if(creationToolState == windowCreationState) {
+	if(creationState == resize) {
+		truc = "Resizing the window";
+	}
+	else if(creationToolState == windowCreationState) {
 		truc = "Drawing the window";
 	}
 	else if(creationToolState == polygonCreationState) {
