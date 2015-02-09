@@ -49,6 +49,7 @@ void drawWindow();									// draws the window (algorithm of my bite)
 void createMenu();
 void menu(int opt);
 void colorPicking(int option);
+void setPolygonColor(float colors[3], float r, float g, float b);
 void write();										// Writes on the top left what's happening
 void writePointCoordinates(Point p);
 void drawPointsToFill();
@@ -95,8 +96,7 @@ void display() {
 
 	if(fenetrage == 1)
 		drawPolygon(polygonFenetre, polygonColor); //Draw the polygon
-	else
-		drawPolygon(polygon, polygonColor);
+	drawPolygon(polygon, polygonColor);
 	drawPolygon(window, windowColor); // Draw the window
 	glutSwapBuffers();				// Double buffer ?
 
@@ -272,29 +272,39 @@ void menu(int opt) {
 }
 
 void colorPicking(int option) {
-	switch(option) {
+	switch (option) {
 	case 0:
 		printf("Vert\n");
-		polygonColor[0] = 0.f;
-		polygonColor[1] = 1.f;
-		polygonColor[2] = 0.f;
+		if (creationToolState == polygonCreationState)
+			setPolygonColor(&polygonColor, 0.f, 1.f, 0.f);
+		else
+			setPolygonColor(&windowColor, 0.f, 1.f, 0.f);
 		break;
 	case 1:
 		printf("Bleu\n");
-		polygonColor[0] = 0.f;
-		polygonColor[1] = 0.f;
-		polygonColor[2] = 1.f;
+		if (creationToolState == polygonCreationState)
+			setPolygonColor(&polygonColor, 0.f, 0.f, 1.f);
+		else
+			setPolygonColor(&windowColor, 0.f, 0.f, 1.f);
 		break;
 	case 2:
 		printf("Rouge\n");
-		polygonColor[0] = 1.f;
-		polygonColor[1] = 0.f;
-		polygonColor[2] = 0.f;
+		if (creationToolState == polygonCreationState)
+			setPolygonColor(&polygonColor, 1.f, 0.f, 0.f);
+		else
+			setPolygonColor(&windowColor, 1.f, 0.f, 0.f);
 		break;
 	default:
 		break;
 	}
 	display();
+}
+
+void setPolygonColor(float colors[3], float r, float g, float b)
+{
+	*colors = r;
+	*(colors + 1) = g;
+	*(colors + 2) = b;
 }
 
 void drawPolygon(CustomPolygon cp, float color[]) {
