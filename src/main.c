@@ -1,17 +1,3 @@
-/*******************************************************/
-/*					didac.c							   */
-/*******************************************************/
-/*													   */
-/*	Préambule OpenGL sous Glut			               */
-/*  ESGI : 2I année 						           */
-/*													   */
-/*******************************************************/
-/*													   */
-/*  Fenêtre graphique 2D vierge                        */
-/*  Evènement souris actif, q pour quitter             */
-/*													   */
-/*******************************************************/
-
 #include<windows.h>
 #include<GL/glut.h>
 #include<stdlib.h>
@@ -34,19 +20,18 @@ float windowColor[3] = {0, 0.5f, 0.5f};		// Window color
 
 int presse = 0;								// Stores if the mouse is dragging
 int fenetrage = 0;
+
 /* Functions prototypes */
 void display();										// manages displaying
 void keyboard(unsigned char key, int x, int y);		// manages keyboard inputs
 void mouse(int bouton, int etat, int x, int y);		// manages mouse clicks
 void motion(int x, int y);							// manages mouse motions
 
-void drawPolygon(CustomPolygon cp, float color[]);								// draws the polygons
-void drawWindow();									// draws the window (algorithm of my bite)
+void drawPolygon(CustomPolygon cp, float color[]);	// draws the polygons
 void createMenu();
 void menu(int opt);
 void colorPicking(int option);
-// Debug
-void printPolygon(int polygonCount);
+void setPolygonColor(float colors[3], float r, float g, float b);
 
 int main(int argc, char **argv) {
 	//Glut and Window Initialization
@@ -54,7 +39,7 @@ int main(int argc, char **argv) {
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);	// RGB display mode, with depth
 	glutInitWindowSize(500, 500);								// Sets window's dimensions
 	glutInitWindowPosition(100, 100);							// Positions the window
-	glutCreateWindow("FunStuffWithOpenGL");						// Title of the window
+	glutCreateWindow("Projet 4A3DJV");						// Title of the window
 
 	gluOrtho2D(0, 500, 500, 0);									// 2D orthogonal frame with xMin, xMax, yMin, yMax
 
@@ -185,7 +170,6 @@ void keyboard(unsigned char key, int x, int y) {
 	}
 }
 
-//TODO
 /*
 * Creates the menu available via right-click
 */
@@ -206,7 +190,6 @@ void createMenu() {
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
-//TODO
 /*
 * Function to handle menu
 */
@@ -237,21 +220,24 @@ void colorPicking(int option) {
 	switch(option) {
 	case 0:
 		printf("Vert\n");
-		polygonColor[0] = 0.f;
-		polygonColor[1] = 1.f;
-		polygonColor[2] = 0.f;
+		if (creationToolState == polygonCreationState)
+			setPolygonColor(&polygonColor, 0.f, 1.f, 0.f);
+		else
+			setPolygonColor(&windowColor, 0.f, 1.f, 0.f);
 		break;
 	case 1:
 		printf("Bleu\n");
-		polygonColor[0] = 0.f;
-		polygonColor[1] = 0.f;
-		polygonColor[2] = 1.f;
+		if (creationToolState == polygonCreationState)
+			setPolygonColor(&polygonColor, 0.f, 0.f, 1.f);
+		else
+			setPolygonColor(&windowColor, 0.f, 0.f, 1.f);
 		break;
 	case 2:
 		printf("Rouge\n");
-		polygonColor[0] = 1.f;
-		polygonColor[1] = 0.f;
-		polygonColor[2] = 0.f;
+		if (creationToolState == polygonCreationState)
+			setPolygonColor(&polygonColor, 1.f, 0.f, 0.f);
+		else
+			setPolygonColor(&windowColor, 1.f, 0.f, 0.f);
 		break;
 	default:
 		break;
@@ -273,6 +259,13 @@ void drawPolygon(CustomPolygon cp, float color[]) {
 		glVertex2i(cp.vertices[j].x, cp.vertices[j].y);
 	glVertex2i(cp.vertices[0].x, cp.vertices[0].y);
 	glEnd();
+}
+
+void setPolygonColor(float colors[3], float r, float g, float b)
+{
+	*colors = r;
+	*(colors + 1) = g;
+	*(colors + 2) = b;
 }
 
 void printPolygon(int polygonCount) {

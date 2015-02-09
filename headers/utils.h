@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UTILS_H
+#define UTILS_H
 
 /**
  * Contains the definition of the differents data structures we're gonna need.
@@ -34,3 +35,5 @@ typedef struct CustomPolygon {
 	Point vertices[256];
 	int nbVertices;
 } CustomPolygon;
+
+#endif //UTILS_H
