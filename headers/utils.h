@@ -34,3 +34,9 @@ typedef struct CustomPolygon {
 	Point vertices[256];
 	int nbVertices;
 } CustomPolygon;
+
+// Represents a the points to fill
+typedef struct PointsToFill {
+	Point pointsToFill[20000];
+	int nbPointsToFill;
+} PointsToFill;

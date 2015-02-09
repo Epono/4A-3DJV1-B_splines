@@ -32,6 +32,9 @@ float polygonColor[3] = {0.5f, 0.5f, 0};	// Polygons color
 CustomPolygon window;						// Window used to cut another polygon
 float windowColor[3] = {0, 0.5f, 0.5f};		// Window color
 
+PointsToFill pointsToFill;					// Points to fill
+float fillingColor[3] = {0.5f, 0.5f, 0};	// Filling color
+
 int presse = 0;								// Stores if the mouse is dragging
 int fenetrage = 0;
 /* Functions prototypes */
@@ -47,6 +50,7 @@ void menu(int opt);
 void colorPicking(int option);
 void write();										// Writes on the top left what's happening
 void writePointCoordinates(Point p);
+void drawPointsToFill();
 // Debug
 void printPolygon(int polygonCount);
 
@@ -308,8 +312,47 @@ void write() {
 	for(int i = 0; truc[i] != '\0'; i++)
 		glutBitmapCharacter(GLUT_BITMAP_9_BY_15, truc[i]);
 
-	Point p = {50, 50};
-	writePointCoordinates(p);
+	//Point p = {50, 50};
+	//writePointCoordinates(p);
+}
+
+void drawPointsToFill() {
+
+
+	Point A = {100, 100};
+	Point B = {200, 200};
+	Point C = {200, 100};
+	Point D = {100, 200};
+	Point points[] = {A, B, C, D};
+
+	CustomPolygon pp;
+	pp.nbVertices = 4;
+	pp.vertices[0] = points[0];
+	pp.vertices[1] = points[1];
+	pp.vertices[2] = points[2];
+	pp.vertices[3] = points[3];
+
+	glBegin(GL_POINTS);
+	for(int j = 0; j < pp.nbVertices; j++) {
+		glVertex2i(pp.vertices[j].x, pp.vertices[j].y);
+	}
+	glEnd();
+
+	pointsToFill = remplissageLCA(pp);
+
+
+	glPointSize(1.0);
+
+	glColor3fv(fillingColor);
+
+	// Draws vertices of the polygon
+	glBegin(GL_POINTS);
+	for(int j = 0; j < pointsToFill.nbPointsToFill; j++)
+		glVertex2i(pointsToFill.pointsToFill[j].x, pointsToFill.pointsToFill[j].y);
+	glEnd();
+
+
+	glPointSize(4.0);
 }
 
 /*
