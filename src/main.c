@@ -95,7 +95,7 @@ void display() {
 	write();
 
 	if(fenetrage == 1) {
-		SutherlandHodgman(polygon, window, &polygonFenetre);
+		//SutherlandHodgman(polygon, window, &polygonFenetre);
 		drawPolygon(polygonFenetre, polygonColor, 2); //Draw the polygon
 	}
 	drawPolygon(polygon, polygonColor, 1);
@@ -170,6 +170,8 @@ void motion(int x, int y) {
 		if(windowVerticeToMove != -1) {
 			window.vertices[windowVerticeToMove].x = x;
 			window.vertices[windowVerticeToMove].y = y;
+
+			SutherlandHodgman(polygon, window, &polygonFenetre);
 		}
 	}
 	//xold = x; //sauvegarde des valeurs courantes de la position de la souris
