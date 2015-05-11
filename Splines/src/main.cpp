@@ -11,13 +11,14 @@
 /*  Evènement souris actif, q pour quitter             */
 /*													   */
 /*******************************************************/
-#include "../headers/utils.h"
+#include <GL/glut.h>
+#include <windows.h>
 
 #include <vector>
-
 #include <iostream>
-#include <windows.h>
-#include <GL/glut.h>
+
+#include "utils.h"
+#include "Point.h"
 
 int creationState = waitingForFirstClick;
 
@@ -54,7 +55,7 @@ void printPolygon(int polygonCount);
 int main(int argc, char **argv) {
 	//Glut and Window Initialization
 	glutInit(&argc, argv);										// Initializes Glut
-	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);	// RGB display mode, with depth
+	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);	// RGB display mode, with depth
 	glutInitWindowSize(1280, 720);								// Sets window's dimensions
 	glutInitWindowPosition(100, 100);							// Positions the window
 	glutCreateWindow("FunStuffWithOpenGL");						// Title of the window
@@ -107,18 +108,16 @@ void decasteljau() {
 }
 
 Point drawBezier(Point A, Point B, Point C, Point D, double t) {
-	Point P;
+	float x = pow((1 - t), 3) * A.getX() + 3 * t * pow((1 - t), 2) * B.getX() + 3 * (1 - t) * pow(t, 2)* C.getX() + pow(t, 3)* D.getX(),
+	y = pow((1 - t), 3) * A.getY() + 3 * t * pow((1 - t), 2) * B.getY() + 3 * (1 - t) * pow(t, 2)* C.getY() + pow(t, 3)* D.getY();
 
-	P.x = pow((1 - t), 3) * A.x + 3 * t * pow((1 - t), 2) * B.x + 3 * (1 - t) * pow(t, 2)* C.x + pow(t, 3)* D.x;
-	P.y = pow((1 - t), 3) * A.y + 3 * t * pow((1 - t), 2) * B.y + 3 * (1 - t) * pow(t, 2)* C.y + pow(t, 3)* D.y;
-
-	return P;
+	return Point(x,y);
 }
 
 void drawLine(Point p1, Point p2) {
 	glBegin(GL_LINES);
-	glVertex2i(p1.x, p1.y);
-	glVertex2i(p2.x, p2.y);
+	glVertex2i(p1.getX(), p1.getY());
+	glVertex2i(p2.getX(), p2.getY());
 	glEnd();
 }
 
@@ -141,7 +140,7 @@ void display() {
 * Function in charge of handling mouse events (clicking only, not dragging)
 */
 void mouse(int button, int state, int x, int y) {
-	Point point;
+	Point point(x,y);
 
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
 		presse = 1;
@@ -150,13 +149,11 @@ void mouse(int button, int state, int x, int y) {
 			printf("Coords clicked (pending state) : (%d, %d)\n", x, y);
 			break;
 		case waitingForFirstClick:
-			point.x = x, point.y = y;
 			window.vertices[0] = point;
 			window.nbVertices = 1;
 			creationState++;
 			break;
 		case waitingForNextClick:
-			point.x = x, point.y = y;
 			window.vertices[window.nbVertices++] = point;
 			break;
 		case selectPoint:
@@ -168,8 +165,8 @@ void mouse(int button, int state, int x, int y) {
 		windowVerticeToMove = -1;
 		if(creationState == selectPoint) {
 			for(int i = 0; i < window.nbVertices; i++) {
-				int tempX = window.vertices[i].x;
-				int tempY = window.vertices[i].y;
+				int tempX = window.vertices[i].getX();
+				int tempY = window.vertices[i].getY();
 				int distance = 10;
 				if(abs(tempX - x) < distance && abs(tempY - y) < distance) {
 					windowVerticeToMove = i;
@@ -185,8 +182,8 @@ void mouse(int button, int state, int x, int y) {
 void motion(int x, int y) {
 	if(creationState == selectPoint) {
 		if(windowVerticeToMove != -1) {
-			window.vertices[windowVerticeToMove].x = x;
-			window.vertices[windowVerticeToMove].y = y;
+			window.vertices[windowVerticeToMove].getX() = x;
+			window.vertices[windowVerticeToMove].getY() = y;
 		}
 	}
 
@@ -239,8 +236,8 @@ void keyboard(unsigned char key, int x, int y) {
 	case 127:
 		// deletes selected point
 		if(windowVerticeToMove != -1) {
-			window.vertices[windowVerticeToMove].x = x;
-			window.vertices[windowVerticeToMove].y = y;
+			window.vertices[windowVerticeToMove].getX() = x;
+			window.vertices[windowVerticeToMove].getY() = y;
 			int i;
 			for(i = windowVerticeToMove; i < window.nbVertices - 1; i++) {
 				window.vertices[i] = window.vertices[i + 1];
@@ -329,7 +326,7 @@ void drawPolygon(CustomPolygon cp, float color[], int lineSize) {
 		// Draws vertices of the connected lines strip
 		glBegin(GL_POINTS);
 		for(int j = 0; j < cp.nbVertices; j++) {
-			glVertex2i(cp.vertices[j].x, cp.vertices[j].y);
+			glVertex2i(cp.vertices[j].getX(), cp.vertices[j].getY());
 		}
 		glEnd();
 
@@ -337,7 +334,7 @@ void drawPolygon(CustomPolygon cp, float color[], int lineSize) {
 		if(windowVerticeToMove != -1) {
 			glPointSize(6.0);
 			glBegin(GL_POINTS);
-			glVertex2i(cp.vertices[windowVerticeToMove].x, cp.vertices[windowVerticeToMove].y);
+			glVertex2i(cp.vertices[windowVerticeToMove].getX(), cp.vertices[windowVerticeToMove].getY());
 			glEnd();
 			glPointSize(4.0);
 		}
@@ -347,7 +344,7 @@ void drawPolygon(CustomPolygon cp, float color[], int lineSize) {
 		glColor3fv(color);
 		glBegin(GL_LINE_STRIP);
 		for(int j = 0; j < cp.nbVertices; j++)
-			glVertex2i(cp.vertices[j].x, cp.vertices[j].y);
+			glVertex2i(cp.vertices[j].getX(), cp.vertices[j].getY());
 		glEnd();
 	}
 }

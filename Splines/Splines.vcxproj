@@ -14,7 +14,6 @@
     <ClCompile Include="src\Line.cpp" />
     <ClCompile Include="src\LineStrip.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\Point.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="headers\Line.h" />
@@ -56,6 +55,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\Users\asusasus\Documents\4A3DJV\Math\Bezier\Splines\headers;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -68,6 +68,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\Users\asusasus\Documents\4A3DJV\Math\Bezier\Splines\headers;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

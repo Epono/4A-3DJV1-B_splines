@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Point.h"
+
 /**
 * Contains the definition of the differents data structures we're gonna need.
 */
@@ -11,12 +13,6 @@ typedef enum creationState {
 	pending,
 	selectPoint
 };
-
-// Represents a 2D point (x, y)
-typedef struct Point {
-	int x;
-	int y;
-} Point;
 
 // Represents a Polygon
 typedef struct CustomPolygon {
