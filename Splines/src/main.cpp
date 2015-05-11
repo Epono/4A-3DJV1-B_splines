@@ -44,7 +44,7 @@ void colorPicking(int option);
 void setPolygonColor(float colors[3], float r, float g, float b);
 void write();										// Writes on the top left what's happening
 
-void decasteljau();
+void decasteljau(CustomPolygon cp);
 Point drawBezier(Point A, Point B, Point C, Point D, double t);
 void drawLine(Point p1, Point p2);
 
@@ -95,11 +95,11 @@ int main(int argc, char **argv) {
 //	}
 //}
 
-void decasteljau() {
-	Point POld = window.vertices[0];
-	for(int i = 0; i < window.nbVertices - 3; ++i) {
+void decasteljau(CustomPolygon cp) {
+	Point POld = cp.vertices[0];
+	for(int i = 0; i < cp.nbVertices - 3; ++i) {
 		for(double t = 0.0; t <= 1.0; t += step) {
-			Point P = drawBezier(window.vertices[i], window.vertices[i + 1], window.vertices[i + 2], window.vertices[i + 3], t);
+			Point P = drawBezier(cp.vertices[i], cp.vertices[i + 1], cp.vertices[i + 2], cp.vertices[i + 3], t);
 			drawLine(POld, P);
 			POld = P;
 		}
@@ -132,6 +132,10 @@ void display() {
 	write();
 
 	drawPolygon(window, windowColor, 1); // Draw the window
+
+	for(int i = 0; i < windowsCount; ++i) {
+		drawPolygon(windows[i], windowColor, 1);
+	}
 	glutSwapBuffers();				// Double buffer ?
 
 	glFlush();						// Forces refresh ?
@@ -200,18 +204,24 @@ void motion(int x, int y) {
 */
 void keyboard(unsigned char key, int x, int y) {
 	switch(key) {
-	case 'd': // Switch to connected strip lines creation	
-		if(creationState != waitingForFirstClick) {
+	case 'd': // Switch to connected strip lines creation
+		if(creationState == selectPoint) {
+			creationState = waitingForNextClick;
+		}
+		else if(creationState != waitingForFirstClick) {
 			printf("Switching to window creation\n");
 			creationState = waitingForFirstClick;
 		}
 		break;
 	case 'v': // Validates
-		creationState = pending;
+		creationState = waitingForFirstClick;
+		windows[windowsCount++] = window;
+		window.nbVertices = 0;
 		break;
 	case 'c': // Clear the window
 		creationState = waitingForFirstClick;
 		window.nbVertices = 0;
+		windowsCount = 0;
 		break;
 	case 's':
 		// select point
@@ -321,9 +331,11 @@ void setPolygonColor(float colors[3], float r, float g, float b) {
 }
 
 void drawPolygon(CustomPolygon cp, float color[], int lineSize) {
-	if(window.nbVertices >= 4) {
-		decasteljau();
+	glColor3f(1.0, 0.0, 0.0);		// Sets the drawing color of bezier
+	if(cp.nbVertices >= 4) {
+		decasteljau(cp);
 	}
+	glColor3f(windowColor[0], windowColor[1], windowColor[2]);		// Sets the drawing color
 
 	if(!hideControlPoints) {
 		// Draws vertices of the connected lines strip
@@ -334,6 +346,7 @@ void drawPolygon(CustomPolygon cp, float color[], int lineSize) {
 		glEnd();
 
 		// Draw selected point bigger
+		// TODO: seulement le dernier
 		if(windowVerticeToMove != -1) {
 			glPointSize(6.0);
 			glBegin(GL_POINTS);
