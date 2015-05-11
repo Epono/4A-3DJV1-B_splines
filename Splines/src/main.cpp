@@ -131,7 +131,7 @@ void display() {
 
 	write();
 
-	drawPolygon(window, windowColor, 1); // Draw the window
+	drawPolygon(window, windowColor, 2); // Draw the window
 
 	for(int i = 0; i < windowsCount; ++i) {
 		drawPolygon(windows[i], windowColor, 1);
@@ -331,6 +331,7 @@ void setPolygonColor(float colors[3], float r, float g, float b) {
 }
 
 void drawPolygon(CustomPolygon cp, float color[], int lineSize) {
+	glLineWidth(lineSize);
 	glColor3f(1.0, 0.0, 0.0);		// Sets the drawing color of bezier
 	if(cp.nbVertices >= 4) {
 		decasteljau(cp);
@@ -355,7 +356,6 @@ void drawPolygon(CustomPolygon cp, float color[], int lineSize) {
 			glPointSize(4.0);
 		}
 
-		glLineWidth(lineSize);
 		// Draws the polygon
 		glColor3fv(color);
 		glBegin(GL_LINE_STRIP);
