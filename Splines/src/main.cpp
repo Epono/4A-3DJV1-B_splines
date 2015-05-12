@@ -15,9 +15,9 @@ int creationState = waitingForFirstClick;
 std::vector<LineStrip*> lines;
 LineStrip *currentLine = nullptr;
 
-CustomPolygon window;						// Window used to cut another polygon
-CustomPolygon windows[256];
-int windowsCount;
+//CustomPolygon window;						// Window used to cut another polygon
+//CustomPolygon windows[256];
+//int windowsCount;
 float windowColor[3] = {0, 0.5f, 0.5f};		// Window color
 int windowVerticeToMove = -1;
 bool hideControlPoints = false;
@@ -33,7 +33,7 @@ void keyboardSpecial(int key, int x, int y);		// manages keyboard inputs
 void mouse(int bouton, int etat, int x, int y);		// manages mouse clicks
 void motion(int x, int y);							// manages mouse motions
 
-void drawPolygon(CustomPolygon cp, float color[], int lineSize);								// draws the polygons
+//void drawPolygon(CustomPolygon cp, float color[], int lineSize);								// draws the polygons
 void drawWindow();									// draws the window (algorithm of my bite)
 void createMenu();
 void menu(int opt);
@@ -76,6 +76,8 @@ int main(int argc, char **argv) {
 	glutSpecialFunc(keyboardSpecial);
 	glutMouseFunc(mouse);
 	glutMotionFunc(motion);
+
+	currentLine = new LineStrip();
 
 	//glOrtho(-1, 1.0, -1, 1.0, -1.0, 1.0); // il faut le mettre ?
 	createMenu();							// Creates the menu available via right-click
@@ -184,7 +186,7 @@ void mouse(int button, int state, int x, int y) {
 				windowVerticeToMove = -1;
 				std::vector<Point> points = currentLine->getPoints();
 				if (creationState == selectPoint) {
-					for (int i = 0; i < points.size(); i++) {
+					for (unsigned int i = 0; i < points.size(); i++) {
 						float tempX = points.at(i).getX();
 						float tempY = points.at(i).getY();
 						int distance = 10;
@@ -270,16 +272,17 @@ void keyboard(unsigned char key, int x, int y) {
 		break;
 	case 127:
 		// deletes selected point
-		if(windowVerticeToMove != -1) {
-			window.vertices[windowVerticeToMove].setX(x);
-			window.vertices[windowVerticeToMove].setY(y);
-			int i;
-			for(i = windowVerticeToMove; i < window.nbVertices - 1; i++) {
-				window.vertices[i] = window.vertices[i + 1];
-			}
-			window.nbVertices--;
-		}
-		windowVerticeToMove = -1;
+		// TO REDO
+		//if(windowVerticeToMove != -1) {
+		//	window.vertices[windowVerticeToMove].setX(x);
+		//	window.vertices[windowVerticeToMove].setY(y);
+		//	int i;
+		//	for(i = windowVerticeToMove; i < window.nbVertices - 1; i++) {
+		//		window.vertices[i] = window.vertices[i + 1];
+		//	}
+		//	window.nbVertices--;
+		//}
+		//windowVerticeToMove = -1;
 		break;
 	case 27:
 		exit(0);
@@ -443,41 +446,41 @@ void drawCurve(LineStrip& line, int lineSize)
 	}
 }
 
-void drawPolygon(CustomPolygon cp, float color[], int lineSize) {
-	glLineWidth(lineSize);
-	glColor3f(1.0, 0.0, 0.0);		// Sets the drawing color of bezier
-	drawBezier(pas, *currentLine);
-	/*if(cp.nbVertices >= 4) {
-		decasteljau(cp);
-	}*/
-	glColor3f(windowColor[0], windowColor[1], windowColor[2]);		// Sets the drawing color
-
-	if(!hideControlPoints) {
-		// Draws vertices of the connected lines strip
-		glBegin(GL_POINTS);
-		for(int j = 0; j < cp.nbVertices; j++) {
-			glVertex2i(cp.vertices[j].getX(), cp.vertices[j].getY());
-		}
-		glEnd();
-
-		// Draw selected point bigger
-		// TODO: seulement le dernier
-		if(windowVerticeToMove != -1) {
-			glPointSize(6.0);
-			glBegin(GL_POINTS);
-			glVertex2i(cp.vertices[windowVerticeToMove].getX(), cp.vertices[windowVerticeToMove].getY());
-			glEnd();
-			glPointSize(4.0);
-		}
-
-		// Draws the polygon
-		glColor3fv(color);
-		glBegin(GL_LINE_STRIP);
-		for(int j = 0; j < cp.nbVertices; j++)
-			glVertex2i(cp.vertices[j].getX(), cp.vertices[j].getY());
-		glEnd();
-	}
-}
+//void drawPolygon(CustomPolygon cp, float color[], int lineSize) {
+//	glLineWidth(lineSize);
+//	glColor3f(1.0, 0.0, 0.0);		// Sets the drawing color of bezier
+//	drawBezier(pas, *currentLine);
+//	/*if(cp.nbVertices >= 4) {
+//		decasteljau(cp);
+//	}*/
+//	glColor3f(windowColor[0], windowColor[1], windowColor[2]);		// Sets the drawing color
+//
+//	if(!hideControlPoints) {
+//		// Draws vertices of the connected lines strip
+//		glBegin(GL_POINTS);
+//		for(int j = 0; j < cp.nbVertices; j++) {
+//			glVertex2i(cp.vertices[j].getX(), cp.vertices[j].getY());
+//		}
+//		glEnd();
+//
+//		// Draw selected point bigger
+//		// TODO: seulement le dernier
+//		if(windowVerticeToMove != -1) {
+//			glPointSize(6.0);
+//			glBegin(GL_POINTS);
+//			glVertex2i(cp.vertices[windowVerticeToMove].getX(), cp.vertices[windowVerticeToMove].getY());
+//			glEnd();
+//			glPointSize(4.0);
+//		}
+//
+//		// Draws the polygon
+//		glColor3fv(color);
+//		glBegin(GL_LINE_STRIP);
+//		for(int j = 0; j < cp.nbVertices; j++)
+//			glVertex2i(cp.vertices[j].getX(), cp.vertices[j].getY());
+//		glEnd();
+//	}
+//}
 
 void write() {
 	char* truc;
@@ -499,7 +502,7 @@ void write() {
 // Faire en mode matrice
 void translate(int x, int y) {
 	std::vector<Point> points = currentLine->getPoints();
-	for(int i = 0; i < points.size(); i++) {
+	for(unsigned int i = 0; i < points.size(); i++) {
 		points.at(i).setX(points.at(i).getX() + x);
 		points.at(i).setY(points.at(i).getY() + x);
 	}
@@ -514,14 +517,14 @@ void scale(float scaleX, float scaleY) {
 
 	//Calcul du barycentre pour décaler
 	std::vector<Point> points = currentLine->getPoints();
-	for (int i = 0; i < points.size(); i++) {
+	for(unsigned int i = 0; i < points.size(); i++) {
 		sumX += points.at(i).getX();
 		sumY += points.at(i).getY();
 	}
 
-	Point barycenter = {sumX / window.nbVertices, sumY / window.nbVertices};
+	Point barycenter = {sumX / currentLine->getPoints().size(), sumY / currentLine->getPoints().size()};
 
-	for(int i = 0; i < window.nbVertices; i++) {
+	for(unsigned int i = 0; i < points.size(); i++) {
 
 		// Translate barycenter to origin
 		points.at(i).setX(points.at(i).getX() - barycenter.getX());
@@ -549,14 +552,14 @@ void rotate(float angle) {
 
 	//Calcul du barycentre pour décaler
 	std::vector<Point> points = currentLine->getPoints();
-	for (int i = 0; i < points.size(); i++) {
+	for(unsigned int i = 0; i < points.size(); i++) {
 		sumX += points.at(i).getX();
 		sumY += points.at(i).getY();
 	}
 
-	Point barycenter = {sumX / window.nbVertices, sumY / window.nbVertices};
+	Point barycenter = {sumX / currentLine->getPoints().size(), sumY / currentLine->getPoints().size()};
 
-	for(int i = 0; i < window.nbVertices; i++) {
+	for(unsigned int i = 0; i < points.size(); i++) {
 
 		// Translate barycenter to origin
 		points.at(i).setX(points.at(i).getX() - barycenter.getX());

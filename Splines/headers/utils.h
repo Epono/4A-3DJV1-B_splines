@@ -14,11 +14,11 @@ typedef enum creationState {
 	selectPoint
 };
 
-// Represents a Polygon
-typedef struct CustomPolygon {
-	Point vertices[256];
-	int nbVertices;
-} CustomPolygon;
+//// Represents a Polygon
+//typedef struct CustomPolygon {
+//	Point vertices[256];
+//	int nbVertices;
+//} CustomPolygon;
 
 typedef struct color_rgb{
 	color_rgb(float r, float g, float b) :_r(r), _g(g), _b(b){}
