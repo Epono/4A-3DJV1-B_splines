@@ -19,3 +19,9 @@ typedef struct CustomPolygon {
 	Point vertices[256];
 	int nbVertices;
 } CustomPolygon;
+
+typedef struct color_rgb{
+	float r;
+	float g;
+	float b;
+} color_rgb;

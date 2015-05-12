@@ -11,6 +11,7 @@
 /*  Evènement souris actif, q pour quitter             */
 /*													   */
 /*******************************************************/
+#include <cstdlib>
 #include <GL/glut.h>
 #include <windows.h>
 
@@ -19,8 +20,12 @@
 
 #include "utils.h"
 #include "Point.h"
+#include "LineStrip.h"
 
 int creationState = waitingForFirstClick;
+
+std::vector<LineStrip*> lines;
+LineStrip *currentLine = nullptr;
 
 CustomPolygon window;						// Window used to cut another polygon
 CustomPolygon windows[256];
@@ -153,12 +158,14 @@ void mouse(int button, int state, int x, int y) {
 			printf("Coords clicked (pending state) : (%d, %d)\n", x, y);
 			break;
 		case waitingForFirstClick:
-			window.vertices[0] = point;
-			window.nbVertices = 1;
+			//window.vertices[0] = point;
+			//window.nbVertices = 1;
+			currentLine->addPoint(point);
 			creationState++;
 			break;
 		case waitingForNextClick:
-			window.vertices[window.nbVertices++] = point;
+			//window.vertices[window.nbVertices++] = point;
+			currentLine->addPoint(point);
 			break;
 		case selectPoint:
 			break;
@@ -167,10 +174,13 @@ void mouse(int button, int state, int x, int y) {
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
 		presse = 0;
 		windowVerticeToMove = -1;
+		std::vector<Point*> points = currentLine->getPoints();
 		if(creationState == selectPoint) {
-			for(int i = 0; i < window.nbVertices; i++) {
-				int tempX = window.vertices[i].getX();
-				int tempY = window.vertices[i].getY();
+			for(int i = 0; i < points.size(); i++) {
+				//int tempX = window.vertices[i].getX();
+				int tempX = points.at(i)->getX();
+				//int tempY = window.vertices[i].getY();
+				int tempY = points.at(i)->getY();
 				int distance = 10;
 				if(abs(tempX - x) < distance && abs(tempY - y) < distance) {
 					windowVerticeToMove = i;
@@ -186,8 +196,11 @@ void mouse(int button, int state, int x, int y) {
 void motion(int x, int y) {
 	if(creationState == selectPoint) {
 		if(windowVerticeToMove != -1) {
-			window.vertices[windowVerticeToMove].getX() = x;
-			window.vertices[windowVerticeToMove].getY() = y;
+			std::vector<Point*> points = currentLine->getPoints();
+			//window.vertices[windowVerticeToMove].setX(x);
+			//window.vertices[windowVerticeToMove].setY(y);
+			points.at(windowVerticeToMove)->setX(x);
+			points.at(windowVerticeToMove)->setY(y);
 		}
 	}
 
@@ -246,8 +259,8 @@ void keyboard(unsigned char key, int x, int y) {
 	case 127:
 		// deletes selected point
 		if(windowVerticeToMove != -1) {
-			window.vertices[windowVerticeToMove].getX() = x;
-			window.vertices[windowVerticeToMove].getY() = y;
+			window.vertices[windowVerticeToMove].setX(x);
+			window.vertices[windowVerticeToMove].setY(y);
 			int i;
 			for(i = windowVerticeToMove; i < window.nbVertices - 1; i++) {
 				window.vertices[i] = window.vertices[i + 1];
@@ -298,8 +311,8 @@ void createMenu() {
 	glutAddMenuEntry("Rouge", 2);
 
 	mainMenu = glutCreateMenu(menu);
-	glutAddSubMenu("Couleurs", colorMenu);
-	glutAddMenuEntry("Polygone (tracer)", 1);
+	glutAddSubMenu("Options de courbes", colorMenu);
+	glutAddMenuEntry("Nouvelle courbe", 1);
 	glutAddMenuEntry("Fenetre (tracer)", 2);
 
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
@@ -312,7 +325,11 @@ void createMenu() {
 void menu(int opt) {
 	switch(opt) {
 	case 1: // 
-		printf("Plus utilisé", opt);
+		std::cout << "Nouvelle courbe" << std::endl;
+		if (currentLine != nullptr)
+			lines.push_back(currentLine);
+		currentLine = new LineStrip();
+		creationState = waitingForFirstClick;
 		break;
 	case 2: // Creation de fenetre
 		break;
