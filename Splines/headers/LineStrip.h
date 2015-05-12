@@ -16,6 +16,10 @@ public:
 
 	std::vector<Point> getPoints(){ return _points; }
 	color_rgb getColor(){ return _color; }
+	void setColor(float r, float g, float b)
+	{
+		_color._r = r; _color._g = g; _color._b = b;
+	}
 	void addPoint(Point& p){ _points.push_back(p); }
 
 	~LineStrip();

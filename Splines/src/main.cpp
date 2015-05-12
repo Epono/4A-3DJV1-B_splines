@@ -5,9 +5,12 @@
 #include <vector>
 #include <iostream>
 
-#include <math.h>#include "utils.h"
+#include <math.h>
+#include "utils.h"
 #include "Point.h"
-#include "LineStrip.h"int creationState = waitingForFirstClick;
+#include "LineStrip.h"
+
+int creationState = waitingForFirstClick;
 
 std::vector<LineStrip*> lines;
 LineStrip *currentLine = nullptr;
@@ -140,17 +143,13 @@ void display() {
 	glClear(GL_COLOR_BUFFER_BIT);	// Clears the display
 	
 	write();
+
 	for (auto &l : lines)
 		drawCurve(*l, 2);
 	if (currentLine != nullptr)
 		drawCurve(*currentLine, 2);
-	//drawPolygon(window, windowColor, 2); // Draw the window
-
-	/*for(int i = 0; i < windowsCount; ++i) {
-		drawPolygon(windows[i], windowColor, 1);
-	}*/
+	
 	glutSwapBuffers();				// Double buffer ?
-
 	glFlush();						// Forces refresh ?
 }
 
@@ -168,13 +167,10 @@ void mouse(int button, int state, int x, int y) {
 				printf("Coords clicked (pending state) : (%d, %d)\n", x, y);
 				break;
 			case waitingForFirstClick:
-				//window.vertices[0] = point;
-				//window.nbVertices = 1;
 				currentLine->addPoint(point);
 				creationState++;
 				break;
 			case waitingForNextClick:
-				//window.vertices[window.nbVertices++] = point;
 				currentLine->addPoint(point);
 				break;
 			case selectPoint:
@@ -189,9 +185,7 @@ void mouse(int button, int state, int x, int y) {
 				std::vector<Point> points = currentLine->getPoints();
 				if (creationState == selectPoint) {
 					for (int i = 0; i < points.size(); i++) {
-						//int tempX = window.vertices[i].getX();
 						float tempX = points.at(i).getX();
-						//int tempY = window.vertices[i].getY();
 						float tempY = points.at(i).getY();
 						int distance = 10;
 						if (abs(tempX - x) < distance && abs(tempY - y) < distance) {
@@ -211,8 +205,6 @@ void motion(int x, int y) {
 	if(creationState == selectPoint) {
 		if(windowVerticeToMove != -1) {
 			std::vector<Point> points = currentLine->getPoints();
-			//window.vertices[windowVerticeToMove].setX(x);
-			//window.vertices[windowVerticeToMove].setY(y);
 			points.at(windowVerticeToMove).setX(x);
 			points.at(windowVerticeToMove).setY(y);
 		}
@@ -357,41 +349,19 @@ void keyboardSpecial(int key, int x, int y) {
 	glutPostRedisplay(); // Rafraichissement de l'affichage
 }
 
-void colorPicking(int option) {
-	switch(option) {
-	case 0:
-		std::cout << "Vert" << std::endl;
-		dessinColor._r = 0.f; dessinColor._g = 1.f;dessinColor._b = 0.f;
-		break;
-	case 1:
-		std::cout << "Bleu" << std::endl;
-		dessinColor._r = 0.f; dessinColor._g = 0.f; dessinColor._b = 1.f;
-		break;
-	case 2:
-		std::cout << "Rouge" << std::endl;
-		dessinColor._r = 1.f; dessinColor._g = 0.f; dessinColor._b = 0.f;
-		break;
-	default:
-		break;
-	}
-	display();
-}
-
 //TODO
 /*
 * Creates the menu available via right-click
 */
 void createMenu() {
-	int mainMenu, colorMenu;
-
-	colorMenu = glutCreateMenu(colorPicking);
-	glutAddMenuEntry("Vert", 0);
-	glutAddMenuEntry("Bleu", 1);
-	glutAddMenuEntry("Rouge", 2);
+	int mainMenu;
 
 	mainMenu = glutCreateMenu(menu);
-	glutAddSubMenu("Couleurs", colorMenu);
-	glutAddMenuEntry("Nouvelle courbe", 1);
+	
+	glutAddMenuEntry("Vert", 1);
+	glutAddMenuEntry("Rouge", 2);
+	glutAddMenuEntry("Bleu", 3);
+	glutAddMenuEntry("Nouvelle courbe", 4);
 
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
@@ -400,7 +370,7 @@ void createMenu() {
 /*
 * Function to handle menu
 */
-void menu(int opt) {
+/*void menu(int opt) {
 	switch(opt) {
 	case 1: // 
 		std::cout << "Nouvelle courbe" << std::endl;
@@ -409,11 +379,39 @@ void menu(int opt) {
 		currentLine = new LineStrip();
 		creationState = waitingForFirstClick;
 		break;
-	case 2: // Creation de fenetre
-		break;
+	default: 
 		printf("What ? %d choisie mais pas d'option\n", opt);
 		break;
 	}
+}*/
+
+void menu(int opt)
+{
+	switch (opt) {
+	case 1: 
+		std::cout << "Vert" << std::endl;
+		currentLine->setColor(0.f, 1.f, 0.f);
+		break;
+	case 2:
+		std::cout << "Rouge" << std::endl;
+		currentLine->setColor(1.f, 0.f, 0.f);
+		break;
+	case 3:
+		std::cout << "Bleu" << std::endl;
+		currentLine->setColor(0.f, 0.f, 1.f);
+		break;
+	case 4: // 
+		std::cout << "Nouvelle courbe" << std::endl;
+		if (currentLine != nullptr)
+			lines.push_back(currentLine);
+		currentLine = new LineStrip();
+		creationState = waitingForFirstClick;
+		break;
+	default:
+		printf("What ? %d choisie mais pas d'option\n", opt);
+		break;
+	}
+	display();
 }
 
 void setPolygonColor(float colors[3], float r, float g, float b) {
@@ -500,9 +498,10 @@ void write() {
 
 // Faire en mode matrice
 void translate(int x, int y) {
-	for(int i = 0; i < window.nbVertices; i++) {
-		window.vertices[i].x += x;
-		window.vertices[i].y += y;
+	std::vector<Point> points = currentLine->getPoints();
+	for(int i = 0; i < points.size(); i++) {
+		points.at(i).setX(points.at(i).getX() + x);
+		points.at(i).setY(points.at(i).getY() + x);
 	}
 }
 
@@ -514,9 +513,10 @@ void scale(float scaleX, float scaleY) {
 	float sumY = 0;
 
 	//Calcul du barycentre pour décaler
-	for(int i = 0; i < window.nbVertices; i++) {
-		sumX += window.vertices[i].x;
-		sumY += window.vertices[i].y;
+	std::vector<Point> points = currentLine->getPoints();
+	for (int i = 0; i < points.size(); i++) {
+		sumX += points.at(i).getX();
+		sumY += points.at(i).getY();
 	}
 
 	Point barycenter = {sumX / window.nbVertices, sumY / window.nbVertices};
@@ -524,16 +524,16 @@ void scale(float scaleX, float scaleY) {
 	for(int i = 0; i < window.nbVertices; i++) {
 
 		// Translate barycenter to origin
-		window.vertices[i].x -= barycenter.x;
-		window.vertices[i].y -= barycenter.y;
+		points.at(i).setX(points.at(i).getX() - barycenter.getX());
+		points.at(i).setY(points.at(i).getY() - barycenter.getY());
 
 		// Scale
-		window.vertices[i].x *= scaleX;
-		window.vertices[i].y *= scaleY;
+		points.at(i).setX(points.at(i).getX() * scaleX);
+		points.at(i).setY(points.at(i).getY() * scaleY);
 
 		// Translation back
-		window.vertices[i].x += barycenter.x;
-		window.vertices[i].y += barycenter.y;
+		points.at(i).setX(points.at(i).getX() + barycenter.getX());
+		points.at(i).setY(points.at(i).getY() + barycenter.getY());
 	}
 }
 
@@ -548,9 +548,10 @@ void rotate(float angle) {
 	float sumY = 0;
 
 	//Calcul du barycentre pour décaler
-	for(int i = 0; i < window.nbVertices; i++) {
-		sumX += window.vertices[i].x;
-		sumY += window.vertices[i].y;
+	std::vector<Point> points = currentLine->getPoints();
+	for (int i = 0; i < points.size(); i++) {
+		sumX += points.at(i).getX();
+		sumY += points.at(i).getY();
 	}
 
 	Point barycenter = {sumX / window.nbVertices, sumY / window.nbVertices};
@@ -558,18 +559,18 @@ void rotate(float angle) {
 	for(int i = 0; i < window.nbVertices; i++) {
 
 		// Translate barycenter to origin
-		window.vertices[i].x -= barycenter.x;
-		window.vertices[i].y -= barycenter.y;
+		points.at(i).setX(points.at(i).getX() - barycenter.getX());
+		points.at(i).setY(points.at(i).getY() - barycenter.getY());
 
-		x = window.vertices[i].x;
-		y = window.vertices[i].y;
+		x = points.at(i).getX();
+		y = points.at(i).getX();
 
 		// Rotation around origin
-		window.vertices[i].x = (x * cos_angle) + (y * -sin_angle);
-		window.vertices[i].y = (x * sin_angle) + (y * cos_angle);
+		points.at(i).setX((x * cos_angle) + (y * -sin_angle));
+		points.at(i).setY((x * sin_angle) + (y * cos_angle));
 
 		// Translation back
-		window.vertices[i].x += barycenter.x;
-		window.vertices[i].y += barycenter.y;
+		points.at(i).setX(points.at(i).getX() + barycenter.getX());
+		points.at(i).setY(points.at(i).getY() + barycenter.getY());
 	}
 }
