@@ -34,6 +34,8 @@ float windowColor[3] = {0, 0.5f, 0.5f};		// Window color
 int windowVerticeToMove = -1;
 bool hideControlPoints = false;
 float step = 0.01;
+float pas = 20;
+color_rgb dessinColor = color_rgb(1.f,0.f,0.f);
 
 int presse = 0;								// Stores if the mouse is dragging
 /* Functions prototypes */
@@ -50,9 +52,12 @@ void colorPicking(int option);
 void setPolygonColor(float colors[3], float r, float g, float b);
 void write();										// Writes on the top left what's happening
 
-void decasteljau(CustomPolygon cp);
+//void decasteljau(CustomPolygon cp);
+Point* DC(const std::vector<Point>& p, float t);
+void drawBezier(int p, LineStrip& line);
 Point drawBezier(Point A, Point B, Point C, Point D, double t);
-void drawLine(Point p1, Point p2);
+void drawLine(Point& p1, Point& p2);
+void drawCurve(LineStrip& line, int lineSize);
 
 // Debug
 void printPolygon(int polygonCount);
@@ -86,22 +91,33 @@ int main(int argc, char **argv) {
 	return 0;				// Should not get here (unless we exit with 'q' ?)
 }
 
+Point* DC(const std::vector<Point>& p, float t)
+{
+	int n = p.size();
+	std::vector<Point> q(n);
+	for (int i = 0; i < n; ++i)
+		q.at(i) = p.at(i);
+	for (int k = 1; k < n; ++k)
+		for (int i = 0; i < n - k; ++i)
+		{
+			q.at(i).setX((1 - t)*q.at(i).getX() + t*q.at(i + 1).getX());
+			q.at(i).setY((1 - t)*q.at(i).getY() + t*q.at(i + 1).getY());
+		}
+	return new Point(q.at(0));
+}
 
-//void DeCasteljau(float t, std::vector<Point> points, Point &res) {
-//	std::vector<Point> barycentres(points.size());
-//
-//	for(int i = 0; i != points.size(); ++i) {
-//		barycentres[i] = 
-//	}
-//
-//	for(int j = 1; j != points.size(); ++j) {
-//		for(int i = 1; i != points.size() - j; ++i) {
-//
-//		}
-//	}
-//}
+void drawBezier(float pas, LineStrip& line)
+{
+	Point A = line.getPoints().at(0), B;
+	for (float k = 1.f; k <= pas; ++k)
+	{
+		B = *DC(line.getPoints(), k / pas);
+		drawLine(A, B);
+		A = B;
+	}
+}
 
-void decasteljau(CustomPolygon cp) {
+/*void decasteljau(CustomPolygon cp) {
 	Point POld = cp.vertices[0];
 	for(int i = 0; i < cp.nbVertices - 3; ++i) {
 		for(double t = 0.0; t <= 1.0; t += step) {
@@ -110,19 +126,19 @@ void decasteljau(CustomPolygon cp) {
 			POld = P;
 		}
 	}
-}
-
+}*/
+/*
 Point drawBezier(Point A, Point B, Point C, Point D, double t) {
 	float x = pow((1 - t), 3) * A.getX() + 3 * t * pow((1 - t), 2) * B.getX() + 3 * (1 - t) * pow(t, 2)* C.getX() + pow(t, 3)* D.getX(),
 	y = pow((1 - t), 3) * A.getY() + 3 * t * pow((1 - t), 2) * B.getY() + 3 * (1 - t) * pow(t, 2)* C.getY() + pow(t, 3)* D.getY();
 
 	return Point(x,y);
-}
+}*/
 
-void drawLine(Point p1, Point p2) {
+void drawLine(Point& p1, Point& p2) {
 	glBegin(GL_LINES);
-	glVertex2i(p1.getX(), p1.getY());
-	glVertex2i(p2.getX(), p2.getY());
+	glVertex2f(p1.getX(), p1.getY());
+	glVertex2f(p2.getX(), p2.getY());
 	glEnd();
 }
 
@@ -131,15 +147,17 @@ void drawLine(Point p1, Point p2) {
 */
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT);	// Clears the display
-	glColor3f(1.0, 0.0, 0.0);		// Sets the drawing color
-
+	
 	write();
+	for (auto &l : lines)
+		drawCurve(*l, 2);
+	if (currentLine != nullptr)
+		drawCurve(*currentLine, 2);
+	//drawPolygon(window, windowColor, 2); // Draw the window
 
-	drawPolygon(window, windowColor, 2); // Draw the window
-
-	for(int i = 0; i < windowsCount; ++i) {
+	/*for(int i = 0; i < windowsCount; ++i) {
 		drawPolygon(windows[i], windowColor, 1);
-	}
+	}*/
 	glutSwapBuffers();				// Double buffer ?
 
 	glFlush();						// Forces refresh ?
@@ -150,41 +168,46 @@ void display() {
 */
 void mouse(int button, int state, int x, int y) {
 	Point point(x,y);
-
-	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
-		presse = 1;
-		switch(creationState) {
-		case pending:
-			printf("Coords clicked (pending state) : (%d, %d)\n", x, y);
-			break;
-		case waitingForFirstClick:
-			//window.vertices[0] = point;
-			//window.nbVertices = 1;
-			currentLine->addPoint(point);
-			creationState++;
-			break;
-		case waitingForNextClick:
-			//window.vertices[window.nbVertices++] = point;
-			currentLine->addPoint(point);
-			break;
-		case selectPoint:
-			break;
+	if (currentLine != nullptr)
+	{
+		if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
+			presse = 1;
+			switch (creationState) {
+			case pending:
+				printf("Coords clicked (pending state) : (%d, %d)\n", x, y);
+				break;
+			case waitingForFirstClick:
+				//window.vertices[0] = point;
+				//window.nbVertices = 1;
+				currentLine->addPoint(point);
+				creationState++;
+				break;
+			case waitingForNextClick:
+				//window.vertices[window.nbVertices++] = point;
+				currentLine->addPoint(point);
+				break;
+			case selectPoint:
+				break;
+			}
 		}
-	}
-	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-		presse = 0;
-		windowVerticeToMove = -1;
-		std::vector<Point*> points = currentLine->getPoints();
-		if(creationState == selectPoint) {
-			for(int i = 0; i < points.size(); i++) {
-				//int tempX = window.vertices[i].getX();
-				int tempX = points.at(i)->getX();
-				//int tempY = window.vertices[i].getY();
-				int tempY = points.at(i)->getY();
-				int distance = 10;
-				if(abs(tempX - x) < distance && abs(tempY - y) < distance) {
-					windowVerticeToMove = i;
-					break;
+		if (currentLine->getPoints().size() > 0)
+		{
+			if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+				presse = 0;
+				windowVerticeToMove = -1;
+				std::vector<Point> points = currentLine->getPoints();
+				if (creationState == selectPoint) {
+					for (int i = 0; i < points.size(); i++) {
+						//int tempX = window.vertices[i].getX();
+						float tempX = points.at(i).getX();
+						//int tempY = window.vertices[i].getY();
+						float tempY = points.at(i).getY();
+						int distance = 10;
+						if (abs(tempX - x) < distance && abs(tempY - y) < distance) {
+							windowVerticeToMove = i;
+							break;
+						}
+					}
 				}
 			}
 		}
@@ -196,11 +219,11 @@ void mouse(int button, int state, int x, int y) {
 void motion(int x, int y) {
 	if(creationState == selectPoint) {
 		if(windowVerticeToMove != -1) {
-			std::vector<Point*> points = currentLine->getPoints();
+			std::vector<Point> points = currentLine->getPoints();
 			//window.vertices[windowVerticeToMove].setX(x);
 			//window.vertices[windowVerticeToMove].setY(y);
-			points.at(windowVerticeToMove)->setX(x);
-			points.at(windowVerticeToMove)->setY(y);
+			points.at(windowVerticeToMove).setX(x);
+			points.at(windowVerticeToMove).setY(y);
 		}
 	}
 
@@ -225,13 +248,15 @@ void keyboard(unsigned char key, int x, int y) {
 		break;
 	case 'v': // Validates
 		creationState = waitingForFirstClick;
-		windows[windowsCount++] = window;
-		window.nbVertices = 0;
+		if (currentLine != nullptr)
+		{
+			lines.push_back(currentLine);
+			currentLine = nullptr;
+		}
 		break;
 	case 'c': // Clear the window
 		creationState = waitingForFirstClick;
-		window.nbVertices = 0;
-		windowsCount = 0;
+		currentLine = nullptr;
 		break;
 	case 's':
 		// select point
@@ -245,16 +270,11 @@ void keyboard(unsigned char key, int x, int y) {
 		hideControlPoints = !hideControlPoints;
 		break;
 	case '-':
-		// increase step
-		if(step + 0.01 < 1) {
-			step += 0.01;
-		}
+		if(pas > 0) --pas;
 		break;
 	case '+':
 		// decrease step
-		if(step - 0.01 > 0) {
-			step -= 0.01;
-		}
+		++pas;
 		break;
 	case 127:
 		// deletes selected point
@@ -281,16 +301,16 @@ void keyboard(unsigned char key, int x, int y) {
 void colorPicking(int option) {
 	switch(option) {
 	case 0:
-		printf("Vert\n");
-		setPolygonColor(windowColor, 0.f, 1.f, 0.f);
+		std::cout << "Vert" << std::endl;
+		dessinColor._r = 0.f; dessinColor._g = 1.f;dessinColor._b = 0.f;
 		break;
 	case 1:
-		printf("Bleu\n");
-		setPolygonColor(windowColor, 0.f, 0.f, 1.f);
+		std::cout << "Bleu" << std::endl;
+		dessinColor._r = 0.f; dessinColor._g = 0.f; dessinColor._b = 1.f;
 		break;
 	case 2:
-		printf("Rouge\n");
-		setPolygonColor(windowColor, 1.f, 0.f, 0.f);
+		std::cout << "Rouge" << std::endl;
+		dessinColor._r = 1.f; dessinColor._g = 0.f; dessinColor._b = 0.f;
 		break;
 	default:
 		break;
@@ -313,7 +333,6 @@ void createMenu() {
 	mainMenu = glutCreateMenu(menu);
 	glutAddSubMenu("Options de courbes", colorMenu);
 	glutAddMenuEntry("Nouvelle courbe", 1);
-	glutAddMenuEntry("Fenetre (tracer)", 2);
 
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
@@ -344,12 +363,36 @@ void setPolygonColor(float colors[3], float r, float g, float b) {
 	*(colors + 2) = b;
 }
 
+void drawCurve(LineStrip& line, int lineSize)
+{
+	glLineWidth(lineSize);
+	glColor3f(1.0f, 0.0f, 0.0f);		// Sets the drawing color
+	glBegin(GL_LINE_STRIP);
+	for (auto &p : line.getPoints())
+		glVertex2f(p.getX(), p.getY());
+	glEnd();
+	if (!hideControlPoints) {
+		// Draws vertices of the connected lines strip
+		glBegin(GL_POINTS);
+		for (auto &p : line.getPoints())
+			glVertex2f(p.getX(), p.getY());
+		glEnd();
+	}
+	if (line.getPoints().size() > 3)
+	{
+		color_rgb c = line.getColor();
+		glColor3f(c._r, c._g, c._b);		// Sets the drawing color
+		drawBezier(pas, line);
+	}
+}
+
 void drawPolygon(CustomPolygon cp, float color[], int lineSize) {
 	glLineWidth(lineSize);
 	glColor3f(1.0, 0.0, 0.0);		// Sets the drawing color of bezier
-	if(cp.nbVertices >= 4) {
+	drawBezier(pas, *currentLine);
+	/*if(cp.nbVertices >= 4) {
 		decasteljau(cp);
-	}
+	}*/
 	glColor3f(windowColor[0], windowColor[1], windowColor[2]);		// Sets the drawing color
 
 	if(!hideControlPoints) {

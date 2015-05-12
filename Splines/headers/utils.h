@@ -21,7 +21,8 @@ typedef struct CustomPolygon {
 } CustomPolygon;
 
 typedef struct color_rgb{
-	float r;
-	float g;
-	float b;
+	color_rgb(float r, float g, float b) :_r(r), _g(g), _b(b){}
+	float _r;
+	float _g;
+	float _b;
 } color_rgb;
