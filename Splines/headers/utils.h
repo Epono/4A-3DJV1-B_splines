@@ -14,8 +14,8 @@ typedef enum creationState {
 
 // Represents a 2D point (x, y)
 typedef struct Point {
-	int x;
-	int y;
+	float x;
+	float y;
 } Point;
 
 // Represents a Polygon

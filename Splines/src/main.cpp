@@ -457,9 +457,31 @@ void translate(int x, int y) {
 // Faire en mode matrice
 // Essayer de le faire par rapport au barycentre
 void scale(float scaleX, float scaleY) {
+
+	float sumX = 0;
+	float sumY = 0;
+
+	//Calcul du barycentre pour décaler
 	for(int i = 0; i < window.nbVertices; i++) {
+		sumX += window.vertices[i].x;
+		sumY += window.vertices[i].y;
+	}
+
+	Point barycenter = {sumX / window.nbVertices, sumY / window.nbVertices};
+
+	for(int i = 0; i < window.nbVertices; i++) {
+
+		// Translate barycenter to origin
+		window.vertices[i].x -= barycenter.x;
+		window.vertices[i].y -= barycenter.y;
+
+		// Scale
 		window.vertices[i].x *= scaleX;
 		window.vertices[i].y *= scaleY;
+
+		// Translation back
+		window.vertices[i].x += barycenter.x;
+		window.vertices[i].y += barycenter.y;
 	}
 }
 
@@ -470,11 +492,32 @@ void rotate(float angle) {
 	float cos_angle = cos(angle);
 	float sin_angle = sin(angle);
 
+	float sumX = 0;
+	float sumY = 0;
+
+	//Calcul du barycentre pour décaler
 	for(int i = 0; i < window.nbVertices; i++) {
+		sumX += window.vertices[i].x;
+		sumY += window.vertices[i].y;
+	}
+
+	Point barycenter = {sumX / window.nbVertices, sumY / window.nbVertices};
+
+	for(int i = 0; i < window.nbVertices; i++) {
+
+		// Translate barycenter to origin
+		window.vertices[i].x -= barycenter.x;
+		window.vertices[i].y -= barycenter.y;
+
 		x = window.vertices[i].x;
 		y = window.vertices[i].y;
 
-		window.vertices[i].x = 5 + (x * cos_angle) + (y * -sin_angle);
-		window.vertices[i].y = 5 + (x * sin_angle) + (y * cos_angle);
+		// Rotation around origin
+		window.vertices[i].x = (x * cos_angle) + (y * -sin_angle);
+		window.vertices[i].y = (x * sin_angle) + (y * cos_angle);
+
+		// Translation back
+		window.vertices[i].x += barycenter.x;
+		window.vertices[i].y += barycenter.y;
 	}
 }
