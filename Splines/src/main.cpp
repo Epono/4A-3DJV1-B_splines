@@ -1,16 +1,3 @@
-/*******************************************************/
-/*					didac.c							   */
-/*******************************************************/
-/*													   */
-/*	Préambule OpenGL sous Glut			               */
-/*  ESGI : 2I année 						           */
-/*													   */
-/*******************************************************/
-/*													   */
-/*  Fenêtre graphique 2D vierge                        */
-/*  Evènement souris actif, q pour quitter             */
-/*													   */
-/*******************************************************/
 #include "../headers/utils.h"
 
 #include <vector>
@@ -18,6 +5,8 @@
 #include <iostream>
 #include <windows.h>
 #include <GL/glut.h>
+
+#include <math.h>
 
 int creationState = waitingForFirstClick;
 
@@ -33,6 +22,7 @@ int presse = 0;								// Stores if the mouse is dragging
 /* Functions prototypes */
 void display();										// manages displaying
 void keyboard(unsigned char key, int x, int y);		// manages keyboard inputs
+void keyboardSpecial(int key, int x, int y);		// manages keyboard inputs
 void mouse(int bouton, int etat, int x, int y);		// manages mouse clicks
 void motion(int x, int y);							// manages mouse motions
 
@@ -47,6 +37,10 @@ void write();										// Writes on the top left what's happening
 void decasteljau(CustomPolygon cp);
 Point drawBezier(Point A, Point B, Point C, Point D, double t);
 void drawLine(Point p1, Point p2);
+
+void translate(int x, int y);
+void scale(float scaleX, float scaleY);
+void rotate(float angle);
 
 // Debug
 void printPolygon(int polygonCount);
@@ -69,6 +63,7 @@ int main(int argc, char **argv) {
 	// Registering of callback functions called by glut
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
+	glutSpecialFunc(keyboardSpecial);
 	glutMouseFunc(mouse);
 	glutMotionFunc(motion);
 
@@ -246,6 +241,15 @@ void keyboard(unsigned char key, int x, int y) {
 			step -= 0.01;
 		}
 		break;
+	case 't':
+		translate(20, 20);
+		break;
+	case 'r':
+		rotate(0.1f);
+		break;
+	case 'o':
+		scale(2.0f, 2.0f);
+		break;
 	case 127:
 		// deletes selected point
 		if(windowVerticeToMove != -1) {
@@ -263,6 +267,65 @@ void keyboard(unsigned char key, int x, int y) {
 		exit(0);
 	case 'q':
 		exit(0);
+	}
+
+	glutPostRedisplay(); // Rafraichissement de l'affichage
+}
+
+void keyboardSpecial(int key, int x, int y) {
+	int modifier = glutGetModifiers();
+
+	switch(modifier) {
+	case 0: // NONE - Translation
+		switch(key) {
+		case 100: // LEFT
+			translate(-10, 0);
+			break;
+		case 101: // UP
+			translate(0, -10);
+			break;
+		case 102: // RIGHT
+			translate(10, 0);
+			break;
+		case 103: // DOWN
+			translate(0, 10);
+			break;
+		}
+		break;
+	case 1: // SHIFT - Scaling
+		switch(key) {
+		case 100: // LEFT
+			scale(0.9f, 1.0f);
+			break;
+		case 101: // UP
+			scale(1.0f, 1.1f);
+			break;
+		case 102: // RIGHT
+			scale(1.1f, 1.0f);
+			break;
+		case 103: // DOWN
+			scale(1.0f, 0.9f);
+			break;
+		}
+		break;
+	case 2: // CTRL - Rotation
+		switch(key) {
+		case 100: // LEFT
+			rotate(0.05f);
+			break;
+		case 101: // UP
+			rotate(0.05f);
+			break;
+		case 102: // RIGHT
+			rotate(-0.05f);
+			break;
+		case 103: // DOWN
+			rotate(-0.05f);
+			break;
+		}
+		break;
+	case 3: // ALT
+		break;
 	}
 
 	glutPostRedisplay(); // Rafraichissement de l'affichage
@@ -301,7 +364,8 @@ void createMenu() {
 	glutAddMenuEntry("Rouge", 2);
 
 	mainMenu = glutCreateMenu(menu);
-	glutAddSubMenu("Couleurs", colorMenu);
+	glutAddSubMenu("Couleur des points de controle", colorMenu);
+	//glutAddSubMenu("Couleur des courbes", colorMenu);
 	glutAddMenuEntry("Polygone (tracer)", 1);
 	glutAddMenuEntry("Fenetre (tracer)", 2);
 
@@ -380,4 +444,37 @@ void write() {
 
 	for(int i = 0; truc[i] != '\0'; i++)
 		glutBitmapCharacter(GLUT_BITMAP_9_BY_15, truc[i]);
+}
+
+// Faire en mode matrice
+void translate(int x, int y) {
+	for(int i = 0; i < window.nbVertices; i++) {
+		window.vertices[i].x += x;
+		window.vertices[i].y += y;
+	}
+}
+
+// Faire en mode matrice
+// Essayer de le faire par rapport au barycentre
+void scale(float scaleX, float scaleY) {
+	for(int i = 0; i < window.nbVertices; i++) {
+		window.vertices[i].x *= scaleX;
+		window.vertices[i].y *= scaleY;
+	}
+}
+
+// Perte d'infos (int - float)
+// Global plutot que local !
+void rotate(float angle) {
+	float x, y;
+	float cos_angle = cos(angle);
+	float sin_angle = sin(angle);
+
+	for(int i = 0; i < window.nbVertices; i++) {
+		x = window.vertices[i].x;
+		y = window.vertices[i].y;
+
+		window.vertices[i].x = 5 + (x * cos_angle) + (y * -sin_angle);
+		window.vertices[i].y = 5 + (x * sin_angle) + (y * cos_angle);
+	}
 }
