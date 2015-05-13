@@ -243,23 +243,45 @@ void keyboard(unsigned char key, int x, int y) {
 		break;
 	case '0': // New C0 
 	{
-		lines.push_back(currentLine);
-		LineStrip* previousLine = lines.back();
-		Point previousPoint = previousLine->getPoints().back();
-		currentLine = new LineStrip();
-		currentLine->addPoint(Point(previousPoint));
+		if(currentLine->getPoints().size() > 2) {
+			lines.push_back(currentLine);
+			LineStrip* previousLine = lines.back();
+			Point previousPoint = previousLine->getPoints().back();
+			currentLine = new LineStrip();
+			currentLine->addPoint(Point(previousPoint));
+		}
 		break;
 	}
 	case '1': // New C1 
 	{
-		lines.push_back(currentLine);
-		LineStrip* previousLine = lines.back();
-		Point previousPoint = previousLine->getPoints().back();
-		Point previousPreviousPoint = previousLine->getPoints().rbegin()[1];
-		Point newPoint(2 * previousPoint.getX() - previousPreviousPoint.getX(), 2 * previousPoint.getY() - previousPreviousPoint.getY());
-		currentLine = new LineStrip();
-		currentLine->addPoint(Point(previousPoint));
-		currentLine->addPoint(Point(newPoint));
+		if(currentLine->getPoints().size() > 2) {
+			lines.push_back(currentLine);
+			LineStrip* previousLine = lines.back();
+			Point previousPoint = previousLine->getPoints().back();
+			Point previousPreviousPoint = previousLine->getPoints().rbegin()[1];
+			Point newPoint(2 * previousPoint.getX() - previousPreviousPoint.getX(), 2 * previousPoint.getY() - previousPreviousPoint.getY());
+			currentLine = new LineStrip();
+			currentLine->addPoint(Point(previousPoint));
+			currentLine->addPoint(newPoint);
+		}
+		break;
+	}
+	case '2': // New C2 
+	{
+		if(currentLine->getPoints().size() > 2) {
+			lines.push_back(currentLine);
+			LineStrip* previousLine = lines.back();
+			Point previousPoint = previousLine->getPoints().back();
+			Point previousPreviousPoint = previousLine->getPoints().rbegin()[1];
+			Point previousPreviousPreviousPoint = previousLine->getPoints().rbegin()[2];
+			Point newPoint(2 * previousPoint.getX() - previousPreviousPoint.getX(), 2 * previousPoint.getY() - previousPreviousPoint.getY());
+			Point newNewPoint(previousPreviousPreviousPoint.getX() + 2 * (newPoint.getX() - previousPreviousPoint.getX()),
+							  previousPreviousPreviousPoint.getY() + 2 * (newPoint.getY() - previousPreviousPoint.getY()));
+			currentLine = new LineStrip();
+			currentLine->addPoint(Point(previousPoint));
+			currentLine->addPoint(newPoint);
+			currentLine->addPoint(newNewPoint);
+		}
 		break;
 	}
 	case 127:
