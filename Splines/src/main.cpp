@@ -21,6 +21,8 @@ bool hideControlPoints = false;
 float pas = 20;
 color_rgb dessinColor = color_rgb(1.f, 0.f, 0.f);
 
+Point clicked;
+
 int presse = 0;										// Stores if the mouse is dragging
 
 /* Functions prototypes */
@@ -129,6 +131,7 @@ void display() {
 * Function in charge of handling mouse events (clicking only, not dragging)
 */
 void mouse(int button, int state, int x, int y) {
+	clicked = Point(x, y);
 	Point point(x, y);
 	if(currentLine != nullptr) {
 		if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
@@ -178,6 +181,20 @@ void motion(int x, int y) {
 			points.at(windowVerticeToMove).setX(x);
 			points.at(windowVerticeToMove).setY(y);
 		}
+	}
+	else if(creationState == scaling) {
+		float xOffset = clicked.getX() - x;
+		float yOffset = clicked.getY() - y;
+		scale( 1 - (xOffset / 500), 1 + (yOffset / 500));
+		clicked.setX(x);
+		clicked.setY(y);
+	}
+	else if(creationState == rotating) {
+		float xOffset = clicked.getX() - x;
+		float yOffset = clicked.getY() - y;
+		rotate( 0 - (xOffset / 200));
+		clicked.setX(x);
+		clicked.setY(y);
 	}
 
 	glutPostRedisplay(); // Rafraichissement de l'affichage
@@ -229,14 +246,14 @@ void keyboard(unsigned char key, int x, int y) {
 		// decrease step
 		++pas;
 		break;
-	case 't':
-		translate(20, 20);
-		break;
+		//case 't':
+		//	creationState = translating;
+		//	break;
 	case 'r':
-		rotate(0.1f);
+		creationState = rotating;
 		break;
 	case 'o':
-		scale(2.0f, 2.0f);
+		creationState = scaling;
 		break;
 	case '0': // New C0 
 	{
@@ -467,6 +484,13 @@ void translate(int xOffset, int yOffset) {
 }
 
 void scale(float scaleX, float scaleY) {
+
+	if(scaleX == 0.0f) {
+		scaleX = 1.0f;
+	}
+	if(scaleY == 0.0f) {
+		scaleY = 1.0f;
+	}
 
 	float x, y;
 

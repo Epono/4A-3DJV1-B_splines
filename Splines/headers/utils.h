@@ -7,7 +7,10 @@ typedef enum creationState {
 	waitingForFirstClick,
 	waitingForNextClick,
 	pending,
-	selectPoint
+	selectPoint,
+	scaling,
+	rotating,
+	translating
 };
 
 typedef struct color_rgb {
