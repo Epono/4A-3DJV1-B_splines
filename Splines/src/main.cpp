@@ -259,7 +259,7 @@ void keyboard(unsigned char key, int x, int y) {
 			LineStrip* previousLine = lines.back();
 			Point previousPoint = previousLine->getPoints().back();
 			Point previousPreviousPoint = previousLine->getPoints().rbegin()[1];
-			Point newPoint(2 * previousPoint.getX() - previousPreviousPoint.getX(), 2 * previousPoint.getY() - previousPreviousPoint.getY());
+			Point newPoint(previousPoint.getX() + (previousPoint.getX() - previousPreviousPoint.getX()), previousPoint.getY() + (previousPoint.getY() - previousPreviousPoint.getY()));
 			currentLine = new LineStrip();
 			currentLine->addPoint(Point(previousPoint));
 			currentLine->addPoint(newPoint);
