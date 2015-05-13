@@ -241,6 +241,15 @@ void keyboard(unsigned char key, int x, int y) {
 	case 'o':
 		scale(2.0f, 2.0f);
 		break;
+	case '0': // New C0 
+	{
+		lines.push_back(currentLine);
+		LineStrip* previousLine = lines.back();
+		Point previousPoint = previousLine->getPoints().back();
+		currentLine = new LineStrip();
+		currentLine->addPoint(Point(previousPoint));
+		break;
+	}
 	case 127:
 		// deletes selected point
 		if(windowVerticeToMove != -1) {
