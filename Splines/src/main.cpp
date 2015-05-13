@@ -518,7 +518,7 @@ void rotate(float angle) {
 		sumY += points.at(i).getY();
 	}
 
-	Point barycenter = {sumX / currentLine->getPoints().size(), sumY / currentLine->getPoints().size()};
+	Point barycenter = {sumX / points.size(), sumY / points.size()};
 
 	for(unsigned int i = 0; i < points.size(); i++) {
 
@@ -527,7 +527,7 @@ void rotate(float angle) {
 		points.at(i).setY(points.at(i).getY() - barycenter.getY());
 
 		x = points.at(i).getX();
-		y = points.at(i).getX();
+		y = points.at(i).getY();
 
 		// Rotation around origin
 		points.at(i).setX((x * cos_angle) + (y * -sin_angle));
