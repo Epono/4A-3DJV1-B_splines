@@ -250,6 +250,18 @@ void keyboard(unsigned char key, int x, int y) {
 		currentLine->addPoint(Point(previousPoint));
 		break;
 	}
+	case '1': // New C1 
+	{
+		lines.push_back(currentLine);
+		LineStrip* previousLine = lines.back();
+		Point previousPoint = previousLine->getPoints().back();
+		Point previousPreviousPoint = previousLine->getPoints().rbegin()[1];
+		Point newPoint(2 * previousPoint.getX() - previousPreviousPoint.getX(), 2 * previousPoint.getY() - previousPreviousPoint.getY());
+		currentLine = new LineStrip();
+		currentLine->addPoint(Point(previousPoint));
+		currentLine->addPoint(Point(newPoint));
+		break;
+	}
 	case 127:
 		// deletes selected point
 		if(windowVerticeToMove != -1) {
