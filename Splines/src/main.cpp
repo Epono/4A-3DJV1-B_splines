@@ -178,7 +178,7 @@ void mouse(int button, int state, int x, int y) {
 			if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
 				presse = 0;
 				windowVerticeToMove = -1;
-				std::vector<Point> points = currentLine->getPoints();
+				std::vector<Point>& points = currentLine->getPoints();
 				if(creationState == selectPoint) {
 					for(unsigned int i = 0; i < points.size(); i++) {
 						float tempX = points.at(i).getX();
@@ -200,12 +200,12 @@ void mouse(int button, int state, int x, int y) {
 void motion(int x, int y) {
 	if(creationState == selectPoint) {
 		if(windowVerticeToMove != -1) {
-			std::vector<Point> points = currentLine->getPoints();
+			std::vector<Point>& points = currentLine->getPoints();
 			points.at(windowVerticeToMove).setX(x);
 			points.at(windowVerticeToMove).setY(y);
 
 			//moche
-			currentLine->setPoints(points);
+			//currentLine->setPoints(points);
 		}
 	}
 
@@ -270,9 +270,9 @@ void keyboard(unsigned char key, int x, int y) {
 	case 127:
 		// deletes selected point
 		if(windowVerticeToMove != -1) {
-			std::vector<Point> points = currentLine->getPoints();
+			std::vector<Point>& points = currentLine->getPoints();
 			points.erase(points.begin() + windowVerticeToMove);
-			currentLine->setPoints(points);
+			//currentLine->setPoints(points);
 		}
 		windowVerticeToMove = -1;
 		break;
@@ -456,14 +456,14 @@ void write() {
 
 // Faire en mode matrice
 void translate(int x, int y) {
-	std::vector<Point> points = currentLine->getPoints();
+	std::vector<Point>& points = currentLine->getPoints();
 	for(unsigned int i = 0; i < points.size(); i++) {
 		points.at(i).setX(points.at(i).getX() + x);
 		points.at(i).setY(points.at(i).getY() + y);
 	}
 
 	//Moche
-	currentLine->setPoints(points);
+	//currentLine->setPoints(points);
 }
 
 // Faire en mode matrice
@@ -474,7 +474,7 @@ void scale(float scaleX, float scaleY) {
 	float sumY = 0;
 
 	//Calcul du barycentre pour décaler
-	std::vector<Point> points = currentLine->getPoints();
+	std::vector<Point>& points = currentLine->getPoints();
 	for(unsigned int i = 0; i < points.size(); i++) {
 		sumX += points.at(i).getX();
 		sumY += points.at(i).getY();
@@ -498,7 +498,7 @@ void scale(float scaleX, float scaleY) {
 	}
 
 	//Moche
-	currentLine->setPoints(points);
+	//currentLine->setPoints(points);
 }
 
 // Perte d'infos (int - float)
@@ -512,7 +512,7 @@ void rotate(float angle) {
 	float sumY = 0;
 
 	//Calcul du barycentre pour décaler
-	std::vector<Point> points = currentLine->getPoints();
+	std::vector<Point>& points = currentLine->getPoints();
 	for(unsigned int i = 0; i < points.size(); i++) {
 		sumX += points.at(i).getX();
 		sumY += points.at(i).getY();
@@ -539,5 +539,5 @@ void rotate(float angle) {
 	}
 
 	//Moche
-	currentLine->setPoints(points);
+	//currentLine->setPoints(points);
 }

@@ -14,7 +14,7 @@ public:
 	LineStrip(std::vector<Point> p) 
 		: _points(p), _color(color_rgb(1.f,1.f,1.f)){}
 
-	std::vector<Point> getPoints(){ return _points; }
+	std::vector<Point>& getPoints(){ return _points; }
 	void setPoints(std::vector<Point> points) {
 		_points = points;
 	}
