@@ -48,7 +48,7 @@ Point drawBezier(Point A, Point B, Point C, Point D, double t);
 void drawLine(Point& p1, Point& p2);
 void drawCurve(LineStrip& line, int lineSize);
 
-void translate(int x, int y);
+void translate(int xOffset, int yOffset);
 void scale(float scaleX, float scaleY);
 void rotate(float angle);
 
@@ -430,7 +430,7 @@ void drawCurve(LineStrip& line, int lineSize) {
 			glVertex2f(p.getX(), p.getY());
 		glEnd();
 	}
-	if(line.getPoints().size() > 3) {
+	if(line.getPoints().size() > 2) {
 		color_rgb c = line.getColor();
 		glColor3f(c._r, c._g, c._b);		// Sets the drawing color
 		drawBezier(pas, line);
@@ -454,21 +454,33 @@ void write() {
 		glutBitmapCharacter(GLUT_BITMAP_9_BY_15, truc[i]);
 }
 
-// Faire en mode matrice
-void translate(int x, int y) {
+void translate(int xOffset, int yOffset) {
+
+	float x, y;
+
+	float matrix[6] = {
+		1, 0, xOffset,
+		0, 1, yOffset
+	};
+
 	std::vector<Point>& points = currentLine->getPoints();
 	for(unsigned int i = 0; i < points.size(); i++) {
-		points.at(i).setX(points.at(i).getX() + x);
-		points.at(i).setY(points.at(i).getY() + y);
-	}
+		x = points.at(i).getX();
+		y = points.at(i).getY();
 
-	//Moche
-	//currentLine->setPoints(points);
+		points.at(i).setX((x * matrix[0]) + (y * matrix[1]) + (1 * matrix[2]));
+		points.at(i).setY((x * matrix[3]) + (y * matrix[4]) + (1 * matrix[5]));
+	}
 }
 
-// Faire en mode matrice
-// Essayer de le faire par rapport au barycentre
 void scale(float scaleX, float scaleY) {
+
+	float x, y;
+
+	float matrix[4] = {
+		scaleX, 0,
+		0, scaleY
+	};
 
 	float sumX = 0;
 	float sumY = 0;
@@ -483,30 +495,33 @@ void scale(float scaleX, float scaleY) {
 	Point barycenter = {sumX / currentLine->getPoints().size(), sumY / currentLine->getPoints().size()};
 
 	for(unsigned int i = 0; i < points.size(); i++) {
-
 		// Translate barycenter to origin
 		points.at(i).setX(points.at(i).getX() - barycenter.getX());
 		points.at(i).setY(points.at(i).getY() - barycenter.getY());
 
+		x = points.at(i).getX();
+		y = points.at(i).getY();
+
 		// Scale
-		points.at(i).setX(points.at(i).getX() * scaleX);
-		points.at(i).setY(points.at(i).getY() * scaleY);
+		points.at(i).setX((x * matrix[0]) + (y * matrix[1]));
+		points.at(i).setY((x * matrix[2]) + (y * matrix[3]));
 
 		// Translation back
 		points.at(i).setX(points.at(i).getX() + barycenter.getX());
 		points.at(i).setY(points.at(i).getY() + barycenter.getY());
 	}
-
-	//Moche
-	//currentLine->setPoints(points);
 }
 
-// Perte d'infos (int - float)
-// Global plutot que local !
 void rotate(float angle) {
+
 	float x, y;
 	float cos_angle = cos(angle);
 	float sin_angle = sin(angle);
+
+	float matrix[4] = {
+		cos_angle, -sin_angle,
+		sin_angle, cos_angle
+	};
 
 	float sumX = 0;
 	float sumY = 0;
@@ -530,14 +545,11 @@ void rotate(float angle) {
 		y = points.at(i).getY();
 
 		// Rotation around origin
-		points.at(i).setX((x * cos_angle) + (y * -sin_angle));
-		points.at(i).setY((x * sin_angle) + (y * cos_angle));
+		points.at(i).setX((x * matrix[0]) + (y * matrix[1]));
+		points.at(i).setY((x * matrix[2]) + (y * matrix[3]));
 
 		// Translation back
 		points.at(i).setX(points.at(i).getX() + barycenter.getX());
 		points.at(i).setY(points.at(i).getY() + barycenter.getY());
 	}
-
-	//Moche
-	//currentLine->setPoints(points);
 }
