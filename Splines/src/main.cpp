@@ -23,7 +23,7 @@ int windowVerticeToMove = -1;
 bool hideControlPoints = false;
 float step = 0.01;
 float pas = 20;
-color_rgb dessinColor = color_rgb(1.f,0.f,0.f);
+color_rgb dessinColor = color_rgb(1.f, 0.f, 0.f);
 
 int presse = 0;								// Stores if the mouse is dragging
 /* Functions prototypes */
@@ -87,26 +87,22 @@ int main(int argc, char **argv) {
 	return 0;				// Should not get here (unless we exit with 'q' ?)
 }
 
-Point* DC(const std::vector<Point>& p, float t)
-{
+Point* DC(const std::vector<Point>& p, float t) {
 	int n = p.size();
 	std::vector<Point> q(n);
-	for (int i = 0; i < n; ++i)
+	for(int i = 0; i < n; ++i)
 		q.at(i) = p.at(i);
-	for (int k = 1; k < n; ++k)
-		for (int i = 0; i < n - k; ++i)
-		{
+	for(int k = 1; k < n; ++k)
+		for(int i = 0; i < n - k; ++i) {
 			q.at(i).setX((1 - t)*q.at(i).getX() + t*q.at(i + 1).getX());
 			q.at(i).setY((1 - t)*q.at(i).getY() + t*q.at(i + 1).getY());
 		}
 	return new Point(q.at(0));
 }
 
-void drawBezier(float pas, LineStrip& line)
-{
+void drawBezier(float pas, LineStrip& line) {
 	Point A = line.getPoints().at(0), B;
-	for (float k = 1.f; k <= pas; ++k)
-	{
+	for(float k = 1.f; k <= pas; ++k) {
 		B = *DC(line.getPoints(), k / pas);
 		drawLine(A, B);
 		A = B;
@@ -116,19 +112,19 @@ void drawBezier(float pas, LineStrip& line)
 /*void decasteljau(CustomPolygon cp) {
 	Point POld = cp.vertices[0];
 	for(int i = 0; i < cp.nbVertices - 3; ++i) {
-		for(double t = 0.0; t <= 1.0; t += step) {
-			Point P = drawBezier(cp.vertices[i], cp.vertices[i + 1], cp.vertices[i + 2], cp.vertices[i + 3], t);
-			drawLine(POld, P);
-			POld = P;
-		}
+	for(double t = 0.0; t <= 1.0; t += step) {
+	Point P = drawBezier(cp.vertices[i], cp.vertices[i + 1], cp.vertices[i + 2], cp.vertices[i + 3], t);
+	drawLine(POld, P);
+	POld = P;
 	}
-}*/
+	}
+	}*/
 /*
 Point drawBezier(Point A, Point B, Point C, Point D, double t) {
-	float x = pow((1 - t), 3) * A.getX() + 3 * t * pow((1 - t), 2) * B.getX() + 3 * (1 - t) * pow(t, 2)* C.getX() + pow(t, 3)* D.getX(),
-	y = pow((1 - t), 3) * A.getY() + 3 * t * pow((1 - t), 2) * B.getY() + 3 * (1 - t) * pow(t, 2)* C.getY() + pow(t, 3)* D.getY();
+float x = pow((1 - t), 3) * A.getX() + 3 * t * pow((1 - t), 2) * B.getX() + 3 * (1 - t) * pow(t, 2)* C.getX() + pow(t, 3)* D.getX(),
+y = pow((1 - t), 3) * A.getY() + 3 * t * pow((1 - t), 2) * B.getY() + 3 * (1 - t) * pow(t, 2)* C.getY() + pow(t, 3)* D.getY();
 
-	return Point(x,y);
+return Point(x,y);
 }*/
 
 void drawLine(Point& p1, Point& p2) {
@@ -143,14 +139,14 @@ void drawLine(Point& p1, Point& p2) {
 */
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT);	// Clears the display
-	
+
 	write();
 
-	for (auto &l : lines)
+	for(auto &l : lines)
 		drawCurve(*l, 2);
-	if (currentLine != nullptr)
+	if(currentLine != nullptr)
 		drawCurve(*currentLine, 2);
-	
+
 	glutSwapBuffers();				// Double buffer ?
 	glFlush();						// Forces refresh ?
 }
@@ -159,12 +155,11 @@ void display() {
 * Function in charge of handling mouse events (clicking only, not dragging)
 */
 void mouse(int button, int state, int x, int y) {
-	Point point(x,y);
-	if (currentLine != nullptr)
-	{
-		if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
+	Point point(x, y);
+	if(currentLine != nullptr) {
+		if(button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
 			presse = 1;
-			switch (creationState) {
+			switch(creationState) {
 			case pending:
 				printf("Coords clicked (pending state) : (%d, %d)\n", x, y);
 				break;
@@ -179,18 +174,17 @@ void mouse(int button, int state, int x, int y) {
 				break;
 			}
 		}
-		if (currentLine->getPoints().size() > 0)
-		{
-			if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+		if(currentLine->getPoints().size() > 0) {
+			if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
 				presse = 0;
 				windowVerticeToMove = -1;
 				std::vector<Point> points = currentLine->getPoints();
-				if (creationState == selectPoint) {
-					for (unsigned int i = 0; i < points.size(); i++) {
+				if(creationState == selectPoint) {
+					for(unsigned int i = 0; i < points.size(); i++) {
 						float tempX = points.at(i).getX();
 						float tempY = points.at(i).getY();
 						int distance = 10;
-						if (abs(tempX - x) < distance && abs(tempY - y) < distance) {
+						if(abs(tempX - x) < distance && abs(tempY - y) < distance) {
 							windowVerticeToMove = i;
 							break;
 						}
@@ -209,6 +203,9 @@ void motion(int x, int y) {
 			std::vector<Point> points = currentLine->getPoints();
 			points.at(windowVerticeToMove).setX(x);
 			points.at(windowVerticeToMove).setY(y);
+
+			//moche
+			currentLine->setPoints(points);
 		}
 	}
 
@@ -233,15 +230,15 @@ void keyboard(unsigned char key, int x, int y) {
 		break;
 	case 'v': // Validates
 		creationState = waitingForFirstClick;
-		if (currentLine != nullptr)
-		{
+		if(currentLine != nullptr) {
 			lines.push_back(currentLine);
-			currentLine = nullptr;
+			currentLine = new LineStrip();
 		}
 		break;
 	case 'c': // Clear the window
 		creationState = waitingForFirstClick;
-		currentLine = nullptr;
+		lines.clear();
+		currentLine = new LineStrip();
 		break;
 	case 's':
 		// select point
@@ -272,17 +269,12 @@ void keyboard(unsigned char key, int x, int y) {
 		break;
 	case 127:
 		// deletes selected point
-		// TO REDO
-		//if(windowVerticeToMove != -1) {
-		//	window.vertices[windowVerticeToMove].setX(x);
-		//	window.vertices[windowVerticeToMove].setY(y);
-		//	int i;
-		//	for(i = windowVerticeToMove; i < window.nbVertices - 1; i++) {
-		//		window.vertices[i] = window.vertices[i + 1];
-		//	}
-		//	window.nbVertices--;
-		//}
-		//windowVerticeToMove = -1;
+		if(windowVerticeToMove != -1) {
+			std::vector<Point> points = currentLine->getPoints();
+			points.erase(points.begin() + windowVerticeToMove);
+			currentLine->setPoints(points);
+		}
+		windowVerticeToMove = -1;
 		break;
 	case 27:
 		exit(0);
@@ -360,7 +352,7 @@ void createMenu() {
 	int mainMenu;
 
 	mainMenu = glutCreateMenu(menu);
-	
+
 	glutAddMenuEntry("Vert", 1);
 	glutAddMenuEntry("Rouge", 2);
 	glutAddMenuEntry("Bleu", 3);
@@ -375,23 +367,22 @@ void createMenu() {
 */
 /*void menu(int opt) {
 	switch(opt) {
-	case 1: // 
-		std::cout << "Nouvelle courbe" << std::endl;
-		if (currentLine != nullptr)
-			lines.push_back(currentLine);
-		currentLine = new LineStrip();
-		creationState = waitingForFirstClick;
-		break;
-	default: 
-		printf("What ? %d choisie mais pas d'option\n", opt);
-		break;
+	case 1: //
+	std::cout << "Nouvelle courbe" << std::endl;
+	if (currentLine != nullptr)
+	lines.push_back(currentLine);
+	currentLine = new LineStrip();
+	creationState = waitingForFirstClick;
+	break;
+	default:
+	printf("What ? %d choisie mais pas d'option\n", opt);
+	break;
 	}
-}*/
+	}*/
 
-void menu(int opt)
-{
-	switch (opt) {
-	case 1: 
+void menu(int opt) {
+	switch(opt) {
+	case 1:
 		std::cout << "Vert" << std::endl;
 		currentLine->setColor(0.f, 1.f, 0.f);
 		break;
@@ -405,7 +396,7 @@ void menu(int opt)
 		break;
 	case 4: // 
 		std::cout << "Nouvelle courbe" << std::endl;
-		if (currentLine != nullptr)
+		if(currentLine != nullptr)
 			lines.push_back(currentLine);
 		currentLine = new LineStrip();
 		creationState = waitingForFirstClick;
@@ -423,64 +414,28 @@ void setPolygonColor(float colors[3], float r, float g, float b) {
 	*(colors + 2) = b;
 }
 
-void drawCurve(LineStrip& line, int lineSize)
-{
+void drawCurve(LineStrip& line, int lineSize) {
 	glLineWidth(lineSize);
 	glColor3f(1.0f, 0.0f, 0.0f);		// Sets the drawing color
-	glBegin(GL_LINE_STRIP);
-	for (auto &p : line.getPoints())
-		glVertex2f(p.getX(), p.getY());
-	glEnd();
-	if (!hideControlPoints) {
+	if(!hideControlPoints) {
+		// Draws line strip
+		glBegin(GL_LINE_STRIP);
+		for(auto &p : line.getPoints())
+			glVertex2f(p.getX(), p.getY());
+		glEnd();
+
 		// Draws vertices of the connected lines strip
 		glBegin(GL_POINTS);
-		for (auto &p : line.getPoints())
+		for(auto &p : line.getPoints())
 			glVertex2f(p.getX(), p.getY());
 		glEnd();
 	}
-	if (line.getPoints().size() > 3)
-	{
+	if(line.getPoints().size() > 3) {
 		color_rgb c = line.getColor();
 		glColor3f(c._r, c._g, c._b);		// Sets the drawing color
 		drawBezier(pas, line);
 	}
 }
-
-//void drawPolygon(CustomPolygon cp, float color[], int lineSize) {
-//	glLineWidth(lineSize);
-//	glColor3f(1.0, 0.0, 0.0);		// Sets the drawing color of bezier
-//	drawBezier(pas, *currentLine);
-//	/*if(cp.nbVertices >= 4) {
-//		decasteljau(cp);
-//	}*/
-//	glColor3f(windowColor[0], windowColor[1], windowColor[2]);		// Sets the drawing color
-//
-//	if(!hideControlPoints) {
-//		// Draws vertices of the connected lines strip
-//		glBegin(GL_POINTS);
-//		for(int j = 0; j < cp.nbVertices; j++) {
-//			glVertex2i(cp.vertices[j].getX(), cp.vertices[j].getY());
-//		}
-//		glEnd();
-//
-//		// Draw selected point bigger
-//		// TODO: seulement le dernier
-//		if(windowVerticeToMove != -1) {
-//			glPointSize(6.0);
-//			glBegin(GL_POINTS);
-//			glVertex2i(cp.vertices[windowVerticeToMove].getX(), cp.vertices[windowVerticeToMove].getY());
-//			glEnd();
-//			glPointSize(4.0);
-//		}
-//
-//		// Draws the polygon
-//		glColor3fv(color);
-//		glBegin(GL_LINE_STRIP);
-//		for(int j = 0; j < cp.nbVertices; j++)
-//			glVertex2i(cp.vertices[j].getX(), cp.vertices[j].getY());
-//		glEnd();
-//	}
-//}
 
 void write() {
 	char* truc;
@@ -504,8 +459,11 @@ void translate(int x, int y) {
 	std::vector<Point> points = currentLine->getPoints();
 	for(unsigned int i = 0; i < points.size(); i++) {
 		points.at(i).setX(points.at(i).getX() + x);
-		points.at(i).setY(points.at(i).getY() + x);
+		points.at(i).setY(points.at(i).getY() + y);
 	}
+
+	//Moche
+	currentLine->setPoints(points);
 }
 
 // Faire en mode matrice
@@ -538,6 +496,9 @@ void scale(float scaleX, float scaleY) {
 		points.at(i).setX(points.at(i).getX() + barycenter.getX());
 		points.at(i).setY(points.at(i).getY() + barycenter.getY());
 	}
+
+	//Moche
+	currentLine->setPoints(points);
 }
 
 // Perte d'infos (int - float)
@@ -576,4 +537,7 @@ void rotate(float angle) {
 		points.at(i).setX(points.at(i).getX() + barycenter.getX());
 		points.at(i).setY(points.at(i).getY() + barycenter.getY());
 	}
+
+	//Moche
+	currentLine->setPoints(points);
 }

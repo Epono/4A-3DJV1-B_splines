@@ -15,6 +15,9 @@ public:
 		: _points(p), _color(color_rgb(1.f,1.f,1.f)){}
 
 	std::vector<Point> getPoints(){ return _points; }
+	void setPoints(std::vector<Point> points) {
+		_points = points;
+	}
 	color_rgb getColor(){ return _color; }
 	void setColor(float r, float g, float b)
 	{
