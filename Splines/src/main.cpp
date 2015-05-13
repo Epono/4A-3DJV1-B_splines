@@ -185,14 +185,21 @@ void motion(int x, int y) {
 	else if(creationState == scaling) {
 		float xOffset = clicked.getX() - x;
 		float yOffset = clicked.getY() - y;
-		scale( 1 - (xOffset / 500), 1 + (yOffset / 500));
+		scale(1 - (xOffset / 500), 1 + (yOffset / 500));
 		clicked.setX(x);
 		clicked.setY(y);
 	}
 	else if(creationState == rotating) {
 		float xOffset = clicked.getX() - x;
 		float yOffset = clicked.getY() - y;
-		rotate( 0 - (xOffset / 200));
+		rotate(0 - (xOffset / 200));
+		clicked.setX(x);
+		clicked.setY(y);
+	}
+	else if(creationState == translating) {
+		float xOffset = clicked.getX() - x;
+		float yOffset = clicked.getY() - y;
+		translate(-xOffset, -yOffset);
 		clicked.setX(x);
 		clicked.setY(y);
 	}
@@ -246,9 +253,9 @@ void keyboard(unsigned char key, int x, int y) {
 		// decrease step
 		++pas;
 		break;
-		//case 't':
-		//	creationState = translating;
-		//	break;
+	case 't':
+		creationState = translating;
+		break;
 	case 'r':
 		creationState = rotating;
 		break;
