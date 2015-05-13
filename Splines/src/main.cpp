@@ -15,17 +15,14 @@ int creationState = waitingForFirstClick;
 std::vector<LineStrip*> lines;
 LineStrip *currentLine = nullptr;
 
-//CustomPolygon window;						// Window used to cut another polygon
-//CustomPolygon windows[256];
-//int windowsCount;
 float windowColor[3] = {0, 0.5f, 0.5f};		// Window color
 int windowVerticeToMove = -1;
 bool hideControlPoints = false;
-float step = 0.01;
 float pas = 20;
 color_rgb dessinColor = color_rgb(1.f, 0.f, 0.f);
 
-int presse = 0;								// Stores if the mouse is dragging
+int presse = 0;										// Stores if the mouse is dragging
+
 /* Functions prototypes */
 void display();										// manages displaying
 void keyboard(unsigned char key, int x, int y);		// manages keyboard inputs
@@ -33,7 +30,6 @@ void keyboardSpecial(int key, int x, int y);		// manages keyboard inputs
 void mouse(int bouton, int etat, int x, int y);		// manages mouse clicks
 void motion(int x, int y);							// manages mouse motions
 
-//void drawPolygon(CustomPolygon cp, float color[], int lineSize);								// draws the polygons
 void drawWindow();									// draws the window (algorithm of my bite)
 void createMenu();
 void menu(int opt);
@@ -41,7 +37,6 @@ void colorPicking(int option);
 void setPolygonColor(float colors[3], float r, float g, float b);
 void write();										// Writes on the top left what's happening
 
-//void decasteljau(CustomPolygon cp);
 Point* DC(const std::vector<Point>& p, float t);
 void drawBezier(int p, LineStrip& line);
 Point drawBezier(Point A, Point B, Point C, Point D, double t);
@@ -108,24 +103,6 @@ void drawBezier(float pas, LineStrip& line) {
 		A = B;
 	}
 }
-
-/*void decasteljau(CustomPolygon cp) {
-	Point POld = cp.vertices[0];
-	for(int i = 0; i < cp.nbVertices - 3; ++i) {
-	for(double t = 0.0; t <= 1.0; t += step) {
-	Point P = drawBezier(cp.vertices[i], cp.vertices[i + 1], cp.vertices[i + 2], cp.vertices[i + 3], t);
-	drawLine(POld, P);
-	POld = P;
-	}
-	}
-	}*/
-/*
-Point drawBezier(Point A, Point B, Point C, Point D, double t) {
-float x = pow((1 - t), 3) * A.getX() + 3 * t * pow((1 - t), 2) * B.getX() + 3 * (1 - t) * pow(t, 2)* C.getX() + pow(t, 3)* D.getX(),
-y = pow((1 - t), 3) * A.getY() + 3 * t * pow((1 - t), 2) * B.getY() + 3 * (1 - t) * pow(t, 2)* C.getY() + pow(t, 3)* D.getY();
-
-return Point(x,y);
-}*/
 
 void drawLine(Point& p1, Point& p2) {
 	glBegin(GL_LINES);
@@ -203,9 +180,6 @@ void motion(int x, int y) {
 			std::vector<Point>& points = currentLine->getPoints();
 			points.at(windowVerticeToMove).setX(x);
 			points.at(windowVerticeToMove).setY(y);
-
-			//moche
-			//currentLine->setPoints(points);
 		}
 	}
 
@@ -272,7 +246,6 @@ void keyboard(unsigned char key, int x, int y) {
 		if(windowVerticeToMove != -1) {
 			std::vector<Point>& points = currentLine->getPoints();
 			points.erase(points.begin() + windowVerticeToMove);
-			//currentLine->setPoints(points);
 		}
 		windowVerticeToMove = -1;
 		break;
@@ -344,7 +317,6 @@ void keyboardSpecial(int key, int x, int y) {
 	glutPostRedisplay(); // Rafraichissement de l'affichage
 }
 
-//TODO
 /*
 * Creates the menu available via right-click
 */
@@ -361,25 +333,6 @@ void createMenu() {
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
-//TODO
-/*
-* Function to handle menu
-*/
-/*void menu(int opt) {
-	switch(opt) {
-	case 1: //
-	std::cout << "Nouvelle courbe" << std::endl;
-	if (currentLine != nullptr)
-	lines.push_back(currentLine);
-	currentLine = new LineStrip();
-	creationState = waitingForFirstClick;
-	break;
-	default:
-	printf("What ? %d choisie mais pas d'option\n", opt);
-	break;
-	}
-	}*/
-
 void menu(int opt) {
 	switch(opt) {
 	case 1:
@@ -394,7 +347,7 @@ void menu(int opt) {
 		std::cout << "Bleu" << std::endl;
 		currentLine->setColor(0.f, 0.f, 1.f);
 		break;
-	case 4: // 
+	case 4:
 		std::cout << "Nouvelle courbe" << std::endl;
 		if(currentLine != nullptr)
 			lines.push_back(currentLine);
