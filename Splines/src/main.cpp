@@ -10,6 +10,8 @@
 #include "Point.h"
 #include "LineStrip.h"
 
+#define M_PI 3.14
+
 int creationState = waitingForFirstClick;
 
 std::vector<LineStrip*> lines;
@@ -190,9 +192,44 @@ void motion(int x, int y) {
 		clicked.setY(y);
 	}
 	else if(creationState == rotating) {
-		float xOffset = clicked.getX() - x;
-		float yOffset = clicked.getY() - y;
-		rotate(0 - (xOffset / 200));
+		// OLD WAY
+		//float xOffset = clicked.getX() - x;
+		//float yOffset = clicked.getY() - y;
+		//rotate(0 - (xOffset / 200));
+		//clicked.setX(x);
+		//clicked.setY(y);
+
+		// NEW WAY
+		float sumX = 0;
+		float sumY = 0;
+
+		//Calcul du barycentre pour décaler
+		std::vector<Point>& points = currentLine->getPoints();
+		for(unsigned int i = 0; i < points.size(); i++) {
+			sumX += points.at(i).getX();
+			sumY += points.at(i).getY();
+		}
+
+		Point barycenter = {sumX / points.size(), sumY / points.size()};
+
+		Point a(clicked);
+		Point b(barycenter);
+		Point c(x, y);
+
+		Point ab(b.getX() - a.getX(), b.getY() - a.getY());
+		Point cb(b.getX() - c.getX(), b.getY() - c.getY());
+
+		float dot = (ab.getX() * cb.getX() + ab.getY() * cb.getY()); // dot product
+		float cross = (ab.getX() * cb.getY() - ab.getY() * cb.getX()); // cross product
+
+		float alpha = atan2(cross, dot);
+
+		float angle = floor(alpha * 180. / M_PI + 0.5);
+
+		//std::cout << angle << std::endl;
+
+		rotate(angle * (M_PI / 180));
+
 		clicked.setX(x);
 		clicked.setY(y);
 	}
